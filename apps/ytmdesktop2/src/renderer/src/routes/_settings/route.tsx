@@ -234,14 +234,14 @@ function SettingsLayout() {
 	const { t } = useTranslation();
 
 	useEffect(() => {
-		document.title = `${t.appName} - ${t.tray.settings}`;
-	}, [t.appName, t.tray.settings]);
+		document.title = `${t.appName} - ${t.settings.title}`;
+	}, [t.appName, t.settings.title]);
 
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 
 	return (
 		<div className="absolute inset-0 flex h-full flex-col overflow-hidden bg-background">
-			<ControlBar title={t.tray.settings} />
+			<ControlBar title={t.settings.title} />
 			<SidebarProvider className="min-h-0 flex-1" defaultOpen style={{ "--sidebar-width": "14rem" } as CSSProperties}>
 				<Sidebar collapsible="none" className="border-r border-sidebar-border">
 					<SidebarHeader className="gap-2 border-b border-sidebar-border p-3">
@@ -249,7 +249,7 @@ function SettingsLayout() {
 							<LogoIcon className="size-5 shrink-0" />
 							<div className="flex min-w-0 flex-col">
 								<span className="truncate text-xs font-medium text-sidebar-foreground">{t.appName}</span>
-								<span className="truncate text-[10px] text-muted-foreground">{t.tray.settings}</span>
+								<span className="truncate text-[10px] text-muted-foreground">{t.settings.subtitle}</span>
 							</div>
 						</div>
 					</SidebarHeader>

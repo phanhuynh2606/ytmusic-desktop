@@ -18,6 +18,8 @@
 		"quit": "Quit"
 	},
 	"settings": {
+		"title": "Settings",
+		"subtitle": "Desktop Settings",
 		"languageTitle": "Language / Ngôn ngữ",
 		"languageDescription": "Select the display language for the application.",
 		"languageLabel": "Language",

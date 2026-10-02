@@ -4,7 +4,7 @@
 	"tray": {
 		"checkUpdates": "Kiểm tra cập nhật",
 		"updateAvailable": "Tải bản cập nhật mới",
-		"autoStartup": "Khởi động cùng Windows",
+		"autoStartup": "Khởi động cùng hệ thống",
 		"autoUpdate": "Tự động cập nhật",
 		"quitToTray": "Đóng cửa sổ về khay hệ thống",
 		"settings": "Cài đặt",
@@ -18,6 +18,8 @@
 		"quit": "Thoát ứng dụng"
 	},
 	"settings": {
+		"title": "Cài đặt",
+		"subtitle": "Cài đặt ứng dụng",
 		"languageTitle": "Ngôn ngữ / Language",
 		"languageDescription": "Chọn ngôn ngữ hiển thị cho giao diện ứng dụng.",
 		"languageLabel": "Ngôn ngữ",

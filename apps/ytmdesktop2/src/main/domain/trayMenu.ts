@@ -11,7 +11,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 	const appProvider = provider.getProvider("app") as AppProvider;
 	const { app } = appProvider;
 	const update = provider.getProvider("update");
-	const lang = (sp.app as any).language ?? "vi";
+	const lang = sp.app.language ?? "vi";
 	const t = getTranslations(lang);
 
 	const menu = Menu.buildFromTemplate([
@@ -22,7 +22,9 @@ export const createTrayMenu = (provider: BaseProvider) => {
 		},
 		{
 			label: update.updateAvailable
-				? `${t.tray.updateAvailable} - ${update.updateInfo?.version ? `v${update.updateInfo.version}` : ""}`
+				? (update.updateInfo?.version
+					? `${t.tray.updateAvailable} - v${update.updateInfo.version}`
+					: t.tray.updateAvailable)
 				: t.tray.checkUpdates,
 			click: () => {
 				if (update.updateAvailable) void update.onAutoUpdateRun(null, false);

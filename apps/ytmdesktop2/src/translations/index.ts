@@ -10,7 +10,8 @@ export type SupportedLanguage = keyof typeof translations;
 export type TranslationsType = typeof VI_VN;
 
 export function getTranslations(lang: string = "vi"): TranslationsType {
-	if (lang === "en") {
+	const normalized = (lang || "").toLowerCase();
+	if (normalized.startsWith("en")) {
 		return translations.en;
 	}
 	return translations.vi;
