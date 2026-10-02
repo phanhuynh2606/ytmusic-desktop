@@ -101,10 +101,12 @@ export function ToolbarOptions() {
 					</button>
 				)}
 			</div>
+			{/* Nút Last.fm */}
 			<button
 				type="button"
-				className={`control-button relative h-4 ${lastFMLoading ? "opacity-70" : ""} ${lastFM?.name ? "!w-auto flex gap-2.5 items-center px-1.5" : "w-4"}`}
+				className={`control-button relative h-4 cursor-pointer ${lastFMLoading ? "opacity-70" : ""} ${lastFM?.name ? "!w-auto flex gap-2.5 items-center px-1.5" : "w-4"}`}
 				onClick={authorizeLastFM}
+				title={lastFM?.name ? `Last.fm: ${lastFM.name} (Đã kết nối)` : "Kết nối Last.fm (Thống kê lịch sử bài hát đã nghe)"}
 			>
 				{lastFM?.connected && !lastFM?.error && lastFMState !== null ? (
 					typeof lastFMState === "string" ? (
@@ -119,12 +121,16 @@ export function ToolbarOptions() {
 				)}
 				{lastFM?.name && <span className="text-sm text-gray-100">{lastFM.name}</span>}
 			</button>
+
+			{/* Nút Home */}
 			{!isHome && (
-				<button type="button" className="control-button relative size-4" onClick={() => void home()}>
+				<button type="button" className="control-button relative size-4 cursor-pointer" onClick={() => void home()} title="Về trang chủ YouTube Music">
 					<HomeIcon />
 				</button>
 			)}
-			<button type="button" className="control-button relative size-4" disabled={!!updateChecking} onClick={() => void check()}>
+
+			{/* Nút Kiểm tra cập nhật */}
+			<button type="button" className="control-button relative size-4 cursor-pointer" disabled={!!updateChecking} onClick={() => void check()} title="Kiểm tra bản cập nhật mới">
 				{status === "checking" && !updateInfo ? (
 					<Spinner className="size-3" />
 				) : updateInfo ? (
@@ -133,12 +139,27 @@ export function ToolbarOptions() {
 					<RefreshIcon />
 				)}
 			</button>
+
+			{/* Nút DevTools */}
 			{isDev && (
-				<button type="button" className="control-button relative size-4" onClick={() => void devTools()}>
+				<button type="button" className="control-button relative size-4 cursor-pointer" onClick={() => void devTools()} title="Công cụ lập trình viên (DevTools)">
 					<DevIcon />
 				</button>
 			)}
-			<button type="button" className="control-button relative" onClick={toggleDiscord}>
+
+			{/* Nút Discord Rich Presence */}
+			<button
+				type="button"
+				className="control-button relative cursor-pointer"
+				onClick={toggleDiscord}
+				title={
+					discordEnabled
+						? discordConnected
+							? "Discord Rich Presence: Đang bật (Hiện nhạc lên Discord)"
+							: "Discord: Đang kết nối..."
+						: "Bật Discord Rich Presence (Hiển thị bài hát đang nghe lên trang cá nhân Discord)"
+				}
+			>
 				<RPCIcon
 					className={
 						discordConnectionError && discordEnabled
@@ -161,7 +182,9 @@ export function ToolbarOptions() {
 					</div>
 				)}
 			</button>
-			<button type="button" className="control-button" onClick={() => void openWindow("settingsWindow")}>
+
+			{/* Nút Cài đặt (Settings) */}
+			<button type="button" className="control-button cursor-pointer" onClick={() => void openWindow("settingsWindow")} title="Cài đặt (Settings)">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 					<path
 						fillRule="evenodd"
