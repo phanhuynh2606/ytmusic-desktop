@@ -151,3 +151,11 @@ button.yt-icon-button > yt-icon {
     stroke-width: 1px !important;
   }
 }
+
+.spinner-container.ytmusic-player-bar {
+  width: $playerButtonSize + 8px !important;
+  height: $playerButtonSize + 8px !important;
+  margin: 0 2px !important;
+  transform: none !important;
+  translate: none !important;
+}

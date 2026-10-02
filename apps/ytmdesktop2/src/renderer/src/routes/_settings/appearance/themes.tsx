@@ -81,11 +81,15 @@ const THEME_METADATA: Record<
 };
 
 function ThemesSettingsPage() {
+	const { mutateAsync: reload } = trpc.themes.reload.useMutation();
 	const [enabled, , { isPending: enabledPending }] = useSettingsState("themes.enabled", false);
-	const [selected, setSelected, { isPending: selectedPending }] = useSettingsState("themes.selected", "default");
+	const [selected, setSelected, { isPending: selectedPending }] = useSettingsState("themes.selected", "default", {
+		onPersisted: () => {
+			void reload();
+		},
+	});
 	const [customFile, , { isPending: pathPending }] = useSettingsState("themes.customFile", "");
 	const { data: themes } = trpc.themes.list.useQuery();
-	const { mutateAsync: reload } = trpc.themes.reload.useMutation();
 	const { mutateAsync: openFile } = trpc.app.openFile.useMutation();
 
 	const isCustom = selected === "custom";
@@ -135,7 +139,7 @@ function ThemesSettingsPage() {
 							</div>
 
 							{/* Theme Cards Grid */}
-							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+							<div role="radiogroup" aria-label="Bộ chọn giao diện" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 								{availableThemes.map((theme) => {
 									const meta = THEME_METADATA[theme.id] ?? {
 										label: theme.name,
@@ -151,10 +155,11 @@ function ThemesSettingsPage() {
 										<button
 											key={theme.id}
 											type="button"
+											role="radio"
+											aria-checked={isSelected}
 											disabled={selectedPending}
 											onClick={() => {
 												setSelected(theme.id);
-												void reload();
 											}}
 											className={`relative flex flex-col text-left p-3.5 rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden ${
 												isSelected
