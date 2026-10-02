@@ -1,15 +1,15 @@
 import { platform } from "@electron-toolkit/utils";
 import { AfterInit, BaseProvider, OnDestroy } from "@main/core/baseProvider";
-import { isAppQuitting, shouldCancelWindowClose } from "@main/handlers/quitPolicy";
 import { showOnActiveDesktop } from "@main/domain/showOnActiveDesktop";
 import { positionNearTray } from "@main/domain/trayPosition";
+import { isAppQuitting, shouldCancelWindowClose } from "@main/handlers/quitPolicy";
 import SettingsProvider from "@main/trpc/routers/settings/service";
 import TrayProvider from "@main/trpc/routers/tray/service";
 import { createAppWindow, wrapWindowHandler } from "@main/windows/windowUtils";
 import { App, BrowserWindow, screen } from "electron";
 import { debounce } from "lodash-es";
 
-const TRAY_VIEW_WIDTH = 420;
+const TRAY_VIEW_WIDTH = 380;
 const TRAY_VIEW_HEIGHT = 168;
 
 function clampToVisibleWorkArea(x: number, y: number): { x: number; y: number } {

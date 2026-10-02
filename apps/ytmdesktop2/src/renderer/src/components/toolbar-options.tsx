@@ -1,20 +1,14 @@
-import { AlertCircleIcon, CheckIcon, DownloadIcon, PictureInPicture2, TimerIcon } from "lucide-react";
+import { DownloadIcon, PictureInPicture2, TimerIcon } from "lucide-react";
 import DevIcon from "@/assets/icons/chip.svg?react";
-import RPCIcon from "@/assets/icons/discord-rpc.svg?react";
 import HomeIcon from "@/assets/icons/home.svg?react";
-import LastFMIcon from "@/assets/icons/lastfm.svg?react";
 import RefreshIcon from "@/assets/icons/refresh.svg?react";
 import { Spinner } from "@/components/ui/spinner";
-import { useDiscord } from "@/hooks/use-discord";
-import { useLastFm } from "@/hooks/use-lastfm";
 import { useNavigation } from "@/hooks/use-navigation";
 import { useSettingsState } from "@/hooks/use-settings";
 import { useUpdater } from "@/hooks/use-updater";
 import { trpc } from "@/lib/trpc";
 
 export function ToolbarOptions() {
-	const { lastFM, lastFMState, lastFMLoading, authorizeLastFM } = useLastFm();
-	const { connected: discordConnected, loading: discordLoading, error: discordConnectionError, enabled: discordEnabled, toggle: toggleDiscord } = useDiscord();
 	const { isHome, home, devTools } = useNavigation();
 	const { updateInfo, downloaded: updateDownloaded, checking: updateChecking, status, check } = useUpdater();
 	const [isDev] = useSettingsState<boolean>("app.enableDev", false);
@@ -36,17 +30,17 @@ export function ToolbarOptions() {
 	});
 
 	const { mutateAsync: openSleepDialog } = trpc.sleepTimer.openDialog.useMutation();
+	const { mutateAsync: toggleTrayView } = trpc.trayView.toggle.useMutation();
+	const { data: trayPinned } = trpc.trayView.pinned.useQuery();
 
 	return (
-		<div className="flex flex-row items-center gap-2">
-			{/* Nút Mini Player nổi */}
+		<div className="flex flex-row items-center gap-1.5">
+			{/* Nút Khay phát nhạc thu nhỏ (System Tray View) */}
 			<button
 				type="button"
-				onClick={() => void toggleMiniPlayer()}
-				className={`control-button h-4 flex items-center justify-center cursor-pointer ${
-					miniPlayerState?.isVisible ? "text-red-400 bg-red-500/15 rounded" : ""
-				}`}
-				title="Cửa sổ Mini Player nổi (Always-on-top) - Bấm để Bật/Tắt"
+				onClick={() => void toggleTrayView()}
+				className="control-button h-4 flex items-center justify-center cursor-pointer hover:bg-white/10 rounded transition-colors"
+				title="Khay phát nhạc thu nhỏ (System Tray View) - Bấm để Bật/Tắt"
 			>
 				<PictureInPicture2 className="size-3.5" />
 			</button>
@@ -56,7 +50,7 @@ export function ToolbarOptions() {
 				type="button"
 				onClick={() => void openSleepDialog()}
 				className={`control-button relative h-4 flex items-center gap-1.5 px-2 !w-auto cursor-pointer transition-colors ${
-					sleepState?.active ? "text-amber-400 bg-amber-500/20 rounded" : ""
+					sleepState?.active ? "text-amber-400 bg-amber-500/20 rounded" : "hover:bg-white/10 rounded"
 				}`}
 				title={
 					sleepState?.active
@@ -77,90 +71,36 @@ export function ToolbarOptions() {
 					</span>
 				)}
 			</button>
-			{/* Nút Last.fm */}
-			<button
-				type="button"
-				className={`control-button relative h-4 cursor-pointer ${lastFMLoading ? "opacity-70" : ""} ${lastFM?.name ? "!w-auto flex gap-2.5 items-center px-1.5" : "w-4"}`}
-				onClick={authorizeLastFM}
-				title={lastFM?.name ? `Last.fm: ${lastFM.name} (Đã kết nối)` : "Kết nối Last.fm (Thống kê lịch sử bài hát đã nghe)"}
-			>
-				{lastFM?.connected && !lastFM?.error && lastFMState !== null ? (
-					typeof lastFMState === "string" ? (
-						<Spinner className="size-3" />
-					) : lastFMState === true ? (
-						<CheckIcon className="text-green-500" />
-					) : (
-						<AlertCircleIcon className="text-red-500" />
-					)
-				) : (
-					<LastFMIcon className={lastFM?.connected && !lastFM?.error ? "text-green-500" : lastFM?.error ? "text-red-500" : undefined} />
-				)}
-				{lastFM?.name && <span className="text-sm text-gray-100">{lastFM.name}</span>}
-			</button>
 
-			{/* Nút Home */}
+			{/* Nút Home (chỉ hiện khi đang không ở trang chủ) */}
 			{!isHome && (
-				<button type="button" className="control-button relative size-4 cursor-pointer" onClick={() => void home()} title="Về trang chủ YouTube Music">
+				<button type="button" className="control-button relative size-4 cursor-pointer hover:bg-white/10 rounded" onClick={() => void home()} title="Về trang chủ YouTube Music">
 					<HomeIcon />
 				</button>
 			)}
 
-			{/* Nút Kiểm tra cập nhật */}
-			<button type="button" className="control-button relative size-4 cursor-pointer" disabled={!!updateChecking} onClick={() => void check()} title="Kiểm tra bản cập nhật mới">
-				{status === "checking" && !updateInfo ? (
-					<Spinner className="size-3" />
-				) : updateInfo ? (
-					<DownloadIcon className={status === "ready" || updateDownloaded ? "text-green-500" : "animate-pulse"} />
-				) : (
-					<RefreshIcon />
-				)}
-			</button>
+			{/* Nút Cập nhật (chỉ hiện khi đang kiểm tra hoặc có bản cập nhật mới) */}
+			{(updateInfo || status === "checking") && (
+				<button type="button" className="control-button relative size-4 cursor-pointer" disabled={!!updateChecking} onClick={() => void check()} title="Kiểm tra bản cập nhật mới">
+					{status === "checking" && !updateInfo ? (
+						<Spinner className="size-3" />
+					) : updateInfo ? (
+						<DownloadIcon className={status === "ready" || updateDownloaded ? "text-green-500" : "animate-pulse"} />
+					) : (
+						<RefreshIcon />
+					)}
+				</button>
+			)}
 
-			{/* Nút DevTools */}
+			{/* Nút DevTools (chỉ cho dev) */}
 			{isDev && (
 				<button type="button" className="control-button relative size-4 cursor-pointer" onClick={() => void devTools()} title="Công cụ lập trình viên (DevTools)">
 					<DevIcon />
 				</button>
 			)}
 
-			{/* Nút Discord Rich Presence */}
-			<button
-				type="button"
-				className="control-button relative cursor-pointer"
-				onClick={toggleDiscord}
-				title={
-					discordEnabled
-						? discordConnected
-							? "Discord Rich Presence: Đang bật (Hiện nhạc lên Discord)"
-							: "Discord: Đang kết nối..."
-						: "Bật Discord Rich Presence (Hiển thị bài hát đang nghe lên trang cá nhân Discord)"
-				}
-			>
-				<RPCIcon
-					className={
-						discordConnectionError && discordEnabled
-							? "text-red-500"
-							: discordEnabled || discordConnectionError
-								? "opacity-100"
-								: "opacity-70"
-					}
-				/>
-				{discordConnected && !discordConnectionError && !discordLoading && (
-					<div className="absolute top-0 right-0 flex size-3 items-center justify-center rounded-full bg-green-500 p-0.5">
-						<svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-							<polyline points="20 6 9 17 4 12" />
-						</svg>
-					</div>
-				)}
-				{discordLoading && (
-					<div className="absolute top-0 right-0 flex size-3 items-center justify-center rounded-full bg-gray-600 p-0.5">
-						<Spinner className="size-2" />
-					</div>
-				)}
-			</button>
-
 			{/* Nút Cài đặt (Settings) */}
-			<button type="button" className="control-button cursor-pointer" onClick={() => void openWindow("settingsWindow")} title="Cài đặt (Settings)">
+			<button type="button" className="control-button cursor-pointer hover:bg-white/10 rounded" onClick={() => void openWindow("settingsWindow")} title="Cài đặt (Settings)">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 					<path
 						fillRule="evenodd"
