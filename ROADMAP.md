@@ -29,19 +29,19 @@ File này lưu trữ danh sách tính năng theo dõi tiến độ phát triển
 - [x] Thêm bộ thẻ Card trực quan chọn nhanh các Theme có sẵn trong Settings mà không cần người dùng tự dán mã CSS.
 
 ### 3. ⏰ Hẹn giờ tắt nhạc (Sleep Timer)
-- [ ] Tạo module đếm ngược thời gian trong Main Process: hỗ trợ dừng phát nhạc (Pause) hoặc đóng app hoàn toàn.
-- [ ] Hỗ trợ các mốc thời gian: *15 phút, 30 phút, 45 phút, 1 giờ, hoặc Tắt sau khi hết bài hát hiện tại*.
-- [ ] Thêm nút hẹn giờ trực tiếp trên thanh Toolbar hoặc menu chuột phải ở Khay hệ thống (System Tray).
+- [x] Tạo module đếm ngược thời gian trong Main Process: hỗ trợ dừng phát nhạc (Pause) hoặc đóng app hoàn toàn.
+- [x] Hỗ trợ các mốc thời gian: *15 phút, 30 phút, 45 phút, 1 giờ, hoặc Tắt sau khi hết bài hát hiện tại*.
+- [x] Thêm nút hẹn giờ trực tiếp trên thanh Toolbar và menu chuột phải ở Khay hệ thống (System Tray).
 
 ---
 
 ## ⚡ Giai đoạn 2: Tính năng nâng cao độc quyền (Phase 2: Killer Features)
 
 ### 4. 🎚️ Bộ cân chỉnh âm thanh (Equalizer 10-Band EQ & Bass Boost)
-- [ ] Tiêm `Web Audio API` vào luồng audio của thẻ `<video>`/`<audio>` trong YouTube Music.
-- [ ] Tạo giao diện chỉnh Equalizer 10 dải tần số (32Hz đến 16kHz).
-- [ ] Cài sẵn các cấu hình âm thanh phổ biến: *Bass Boost, Vocal Boost, Rock, Pop, Classical, Acoustic*.
-- [ ] Lưu và khôi phục cấu hình EQ cho từng thể loại nhạc.
+- [x] Tiêm `Web Audio API` vào luồng audio của thẻ `<video>`/`<audio>` trong YouTube Music.
+- [x] Tạo giao diện chỉnh Equalizer 10 dải tần số (32Hz đến 16kHz).
+- [x] Cài sẵn các cấu hình âm thanh phổ biến: *Bass Boost, Vocal Boost, Rock, Pop, Classical, Acoustic, Electronic, Hip-Hop*.
+- [x] Lưu và khôi phục cấu hình EQ cho từng thể loại nhạc.
 
 ### 5. 🪟 Cửa sổ Mini Player nổi ghim trên màn hình (Floating Always-on-Top)
 - [ ] Tạo cửa sổ widget nhỏ gọn có tính năng `Always on Top` (nằm trên mọi ứng dụng/game).

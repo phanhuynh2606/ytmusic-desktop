@@ -2,6 +2,7 @@ import { platform } from "@electron-toolkit/utils";
 import { AfterInit, BaseProvider, OnDestroy } from "@main/core/baseProvider";
 import { createTrayNativeImage } from "@main/domain/trayIcon";
 import { createTrayMenu } from "@main/domain/trayMenu";
+import { serverMain } from "@main/ipc/serverEvents";
 import SettingsProvider from "@main/trpc/routers/settings/service";
 import TrayViewProvider from "@main/trpc/routers/trayView/service";
 import { App, Menu, Tray } from "electron";
@@ -30,6 +31,13 @@ export default class TrayProvider extends BaseProvider implements AfterInit, OnD
 				() => this.onSettingsChange(),
 				{ debounce: 50 },
 			);
+			serverMain.on("sleepTimer.state", () => {
+				if (this._tray && !this._tray.isDestroyed()) {
+					try {
+						this.buildMenu();
+					} catch {}
+				}
+			});
 		}
 		await this.initializeTray();
 	}

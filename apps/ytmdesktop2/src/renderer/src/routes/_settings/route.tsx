@@ -6,6 +6,7 @@ import {
 	RiComputerLine,
 	RiDashboardLine,
 	RiDiscordLine,
+	RiEqualizerLine,
 	RiGithubFill,
 	RiGlobalLine,
 	RiInformationLine,
@@ -62,6 +63,7 @@ type SettingsTabTo =
 	| "/about"
 	| "/player/general"
 	| "/player/lyrics"
+	| "/player/equalizer"
 	| "/api-integrations/api"
 	| "/api-integrations/authentication"
 	| "/api-integrations/remote"
@@ -155,6 +157,7 @@ const PlayerNav = memo(function PlayerNav() {
 					<SidebarMenuSub>
 						<SettingsNavSubItem to="/player/general" label={t.sidebar.general} icon={RiMusic2Line} />
 						<SettingsNavSubItem to="/player/lyrics" label={t.sidebar.lyrics} icon={RiChatQuoteLine} />
+						<SettingsNavSubItem to="/player/equalizer" label={(t.sidebar as any).equalizer ?? "Equalizer"} icon={RiEqualizerLine} />
 					</SidebarMenuSub>
 				</CollapsibleContent>
 			</Collapsible>

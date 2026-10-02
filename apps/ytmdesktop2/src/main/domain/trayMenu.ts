@@ -14,6 +14,9 @@ export const createTrayMenu = (provider: BaseProvider) => {
 	const lang = sp.app.language ?? "vi";
 	const t = getTranslations(lang);
 
+	const sleepTimer = (provider.getProvider as any)("sleepTimer");
+	const st = sleepTimer?.getState();
+
 	const menu = Menu.buildFromTemplate([
 		{
 			label: t.appName,
@@ -119,6 +122,74 @@ export const createTrayMenu = (provider: BaseProvider) => {
 					enabled: sp.themes.enabled,
 					click: (item) => {
 						if (item.enabled) void appProvider.openSettingsWindow();
+					},
+				},
+			],
+		},
+		{
+			type: "separator",
+		},
+		{
+			type: "submenu",
+			label: "⏰ Hẹn giờ tắt nhạc (Sleep Timer)",
+			submenu: [
+				...(st?.active
+					? [
+							{
+								label: `⏳ Đang đếm: ${
+									st.trackEnd
+										? "Hết bài hiện tại"
+										: `${Math.floor((st.remainingSeconds ?? 0) / 60)}:${((st.remainingSeconds ?? 0) % 60).toString().padStart(2, "0")}`
+								}`,
+								enabled: false,
+							},
+							{
+								label: "❌ Hủy hẹn giờ",
+								click: () => {
+									sleepTimer?.cancelTimer();
+								},
+							},
+							{ type: "separator" as const },
+						]
+					: []),
+				{
+					label: "Hết bài hát hiện tại",
+					type: "checkbox",
+					checked: !!st?.active && !!st?.trackEnd,
+					click: () => {
+						sleepTimer?.setTimer({ trackEnd: true, mode: st?.mode ?? "pause" });
+					},
+				},
+				{
+					label: "15 phút",
+					type: "checkbox",
+					checked: !!st?.active && st?.targetDurationMinutes === 15,
+					click: () => {
+						sleepTimer?.setTimer({ durationMinutes: 15, mode: st?.mode ?? "pause" });
+					},
+				},
+				{
+					label: "30 phút",
+					type: "checkbox",
+					checked: !!st?.active && st?.targetDurationMinutes === 30,
+					click: () => {
+						sleepTimer?.setTimer({ durationMinutes: 30, mode: st?.mode ?? "pause" });
+					},
+				},
+				{
+					label: "45 phút",
+					type: "checkbox",
+					checked: !!st?.active && st?.targetDurationMinutes === 45,
+					click: () => {
+						sleepTimer?.setTimer({ durationMinutes: 45, mode: st?.mode ?? "pause" });
+					},
+				},
+				{
+					label: "1 giờ",
+					type: "checkbox",
+					checked: !!st?.active && st?.targetDurationMinutes === 60,
+					click: () => {
+						sleepTimer?.setTimer({ durationMinutes: 60, mode: st?.mode ?? "pause" });
 					},
 				},
 			],

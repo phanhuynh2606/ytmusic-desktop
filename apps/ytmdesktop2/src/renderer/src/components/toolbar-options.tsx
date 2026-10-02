@@ -1,9 +1,10 @@
-import { AlertCircleIcon, CheckIcon, DownloadIcon } from "lucide-react";
+import { AlertCircleIcon, CheckIcon, DownloadIcon, TimerIcon } from "lucide-react";
 import DevIcon from "@/assets/icons/chip.svg?react";
 import RPCIcon from "@/assets/icons/discord-rpc.svg?react";
 import HomeIcon from "@/assets/icons/home.svg?react";
 import LastFMIcon from "@/assets/icons/lastfm.svg?react";
 import RefreshIcon from "@/assets/icons/refresh.svg?react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
 import { useDiscord } from "@/hooks/use-discord";
 import { useLastFm } from "@/hooks/use-lastfm";
@@ -20,8 +21,92 @@ export function ToolbarOptions() {
 	const [isDev] = useSettingsState<boolean>("app.enableDev", false);
 	const { mutateAsync: openWindow } = trpc.app.openWindow.useMutation();
 
+	const { data: sleepState, refetch: refetchSleep } = trpc.sleepTimer.state.useQuery(undefined, {
+		refetchInterval: (data) => (data?.active ? 1000 : false),
+	});
+	const { mutateAsync: setTimer } = trpc.sleepTimer.set.useMutation({
+		onSuccess: () => void refetchSleep(),
+	});
+	const { mutateAsync: cancelTimer } = trpc.sleepTimer.cancel.useMutation({
+		onSuccess: () => void refetchSleep(),
+	});
+
 	return (
 		<div className="flex flex-row items-center gap-2">
+			{/* Nút Hẹn giờ tắt nhạc (Sleep Timer) */}
+			<Popover>
+				<PopoverTrigger
+					className={`control-button relative h-4 flex items-center gap-1.5 px-1.5 !w-auto cursor-pointer ${
+						sleepState?.active ? "text-amber-400 bg-amber-500/15 rounded" : ""
+					}`}
+					title="Hẹn giờ tắt nhạc (Sleep Timer)"
+				>
+					<TimerIcon className="size-3.5" />
+					{sleepState?.active && (
+						<span className="text-[11px] font-mono font-medium">
+							{sleepState.trackEnd
+								? "Hết bài"
+								: `${Math.floor(sleepState.remainingSeconds / 60)}:${(sleepState.remainingSeconds % 60).toString().padStart(2, "0")}`}
+						</span>
+					)}
+				</PopoverTrigger>
+				<PopoverContent className="w-56 p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-white shadow-xl">
+					<div className="font-semibold text-xs mb-2 flex items-center justify-between">
+						<span>⏰ Hẹn giờ tắt nhạc</span>
+						{sleepState?.active && (
+							<span className="text-[10px] text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded font-mono">
+								Đang đếm
+							</span>
+						)}
+					</div>
+					<div className="grid grid-cols-2 gap-1.5 mb-2.5">
+						<button
+							type="button"
+							onClick={() => void setTimer({ trackEnd: true })}
+							className="px-2 py-1.5 rounded-lg text-xs bg-neutral-800 hover:bg-neutral-700 text-left cursor-pointer transition-colors"
+						>
+							Hết bài hiện tại
+						</button>
+						<button
+							type="button"
+							onClick={() => void setTimer({ durationMinutes: 15 })}
+							className="px-2 py-1.5 rounded-lg text-xs bg-neutral-800 hover:bg-neutral-700 text-left cursor-pointer transition-colors"
+						>
+							15 phút
+						</button>
+						<button
+							type="button"
+							onClick={() => void setTimer({ durationMinutes: 30 })}
+							className="px-2 py-1.5 rounded-lg text-xs bg-neutral-800 hover:bg-neutral-700 text-left cursor-pointer transition-colors"
+						>
+							30 phút
+						</button>
+						<button
+							type="button"
+							onClick={() => void setTimer({ durationMinutes: 45 })}
+							className="px-2 py-1.5 rounded-lg text-xs bg-neutral-800 hover:bg-neutral-700 text-left cursor-pointer transition-colors"
+						>
+							45 phút
+						</button>
+						<button
+							type="button"
+							onClick={() => void setTimer({ durationMinutes: 60 })}
+							className="col-span-2 px-2 py-1.5 rounded-lg text-xs bg-neutral-800 hover:bg-neutral-700 text-left cursor-pointer transition-colors"
+						>
+							1 giờ (60 phút)
+						</button>
+					</div>
+					{sleepState?.active && (
+						<button
+							type="button"
+							onClick={() => void cancelTimer()}
+							className="w-full py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 text-center font-medium cursor-pointer transition-colors"
+						>
+							Hủy hẹn giờ
+						</button>
+					)}
+				</PopoverContent>
+			</Popover>
 			<button
 				type="button"
 				className={`control-button relative h-4 ${lastFMLoading ? "opacity-70" : ""} ${lastFM?.name ? "!w-auto flex gap-2.5 items-center px-1.5" : "w-4"}`}

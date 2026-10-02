@@ -1,0 +1,35 @@
+import { provider } from "@main/trpc/provider";
+import { publicProcedure, router } from "@shared/trpc/trpc";
+import { observable } from "@trpc/server/observable";
+import { z } from "zod";
+import type SleepTimerProvider from "./service";
+import type { SleepTimerState } from "./service";
+
+const setTimerInput = z.object({
+	durationMinutes: z.number().positive().optional(),
+	trackEnd: z.boolean().optional(),
+	mode: z.enum(["pause", "quit"]).optional(),
+});
+
+export const sleepTimerRouter = router({
+	state: publicProcedure.query(({ ctx }) => {
+		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
+		return sleepTimer.getState();
+	}),
+	set: publicProcedure.input(setTimerInput).mutation(({ ctx, input }) => {
+		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
+		return sleepTimer.setTimer(input);
+	}),
+	cancel: publicProcedure.mutation(({ ctx }) => {
+		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
+		return sleepTimer.cancelTimer();
+	}),
+	onStateChange: publicProcedure.subscription(({ ctx }) => {
+		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
+		return observable<SleepTimerState>((emit) => {
+			emit.next(sleepTimer.getState());
+			const unsubscribe = sleepTimer.onStateChange((state) => emit.next(state));
+			return () => unsubscribe();
+		});
+	}),
+});
