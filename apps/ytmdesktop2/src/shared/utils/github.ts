@@ -1,7 +1,7 @@
 import { createFetch } from "@better-fetch/fetch";
 
-const REPO_WITH_AUTHOR = import.meta.env.VITE_GITHUB_REPOSITORY;
-const [GITHUB_AUTHOR, GITHUB_REPOSITORY] = REPO_WITH_AUTHOR.split("/", 2);
+const REPO_WITH_AUTHOR = import.meta.env.VITE_GITHUB_REPOSITORY || "phanhuynh2606/ytmusic-desktop";
+const [GITHUB_AUTHOR = "phanhuynh2606", GITHUB_REPOSITORY = "ytmusic-desktop"] = (REPO_WITH_AUTHOR || "").split("/", 2);
 
 export const apiBaseUrl = "https://api.github.com/repos/" + GITHUB_REPOSITORY;
 export const sponsorUrl = "https://github.com/sponsors/" + GITHUB_AUTHOR;
