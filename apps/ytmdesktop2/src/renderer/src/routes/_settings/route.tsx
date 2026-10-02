@@ -43,51 +43,32 @@ import {
 	SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { SpinnerPage } from "@/components/ui/spinner";
+import { useTranslation } from "@/hooks/use-translation";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_settings")({
 	component: SettingsLayout,
 });
 
-const tabs = {
-	generic: { to: "/", label: "Generic", icon: RiSettings3Line },
-	discord: { to: "/discord", label: "Discord", icon: RiDiscordLine },
-	lastfm: { to: "/lastfm", label: "Last.fm", icon: RiAlbumLine },
-	about: { to: "/about", label: "About", icon: RiInformationLine },
-} as const;
-
-const playerSubs = [
-	{ to: "/player/general", label: "General", icon: RiMusic2Line },
-	{ to: "/player/lyrics", label: "Lyrics", icon: RiChatQuoteLine },
-] as const;
-
-const apiCoreSubs = [
-	{ to: "/api-integrations/api", label: "API", icon: RiServerLine },
-	{ to: "/api-integrations/authentication", label: "Authentication", icon: RiKey2Line },
-] as const;
-
-const apiIntegrationSubs = [
-	{ to: "/api-integrations/remote", label: "Remote", icon: RiQrCodeLine },
-	{ to: "/api-integrations/streamdeck", label: "Stream Deck", icon: RiDashboardLine },
-	{ to: "/api-integrations/obs", label: "OBS", icon: RiLiveLine },
-] as const;
-
-const appearanceSubs = [
-	{ to: "/appearance/themes", label: "Themes", icon: RiCodeSSlashLine },
-	{ to: "/appearance/display", label: "Display", icon: RiComputerLine },
-] as const;
-
 const socials = [
-	{ href: "https://github.com/Venipa/ytmdesktop2", label: "GitHub", icon: RiGithubFill },
+	{ href: "https://github.com/phanhuynh2606/ytmusic-desktop", label: "GitHub", icon: RiGithubFill },
 	{ href: "https://youtube-music.app", label: "Website", icon: RiGlobalLine },
 ] as const;
 
 type SettingsTabTo =
-	| (typeof tabs)[keyof typeof tabs]["to"]
-	| (typeof playerSubs)[number]["to"]
-	| (typeof apiCoreSubs)[number]["to"]
-	| (typeof apiIntegrationSubs)[number]["to"]
-	| (typeof appearanceSubs)[number]["to"];
+	| "/"
+	| "/discord"
+	| "/lastfm"
+	| "/about"
+	| "/player/general"
+	| "/player/lyrics"
+	| "/api-integrations/api"
+	| "/api-integrations/authentication"
+	| "/api-integrations/remote"
+	| "/api-integrations/streamdeck"
+	| "/api-integrations/obs"
+	| "/appearance/themes"
+	| "/appearance/display";
 
 /** Avoid Link+useRender compose — breaks first click with hash history. */
 const SettingsNavItem = memo(function SettingsNavItem({
@@ -151,6 +132,7 @@ const SettingsNavSubItem = memo(function SettingsNavSubItem({
 });
 
 const PlayerNav = memo(function PlayerNav() {
+	const { t } = useTranslation();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const isSectionActive = pathname.startsWith("/player");
 	const [open, setOpen] = useState(isSectionActive);
@@ -164,16 +146,15 @@ const PlayerNav = memo(function PlayerNav() {
 			<Collapsible open={open} onOpenChange={setOpen} className="group/collapsible w-full">
 				<CollapsibleTrigger render={<SidebarMenuButton isActive={isSectionActive} />}>
 					<RiMusic2Line />
-					<span>Player</span>
+					<span>{t.sidebar.player}</span>
 					<RiArrowRightSLine
 						className={cn("ml-auto transition-transform duration-150 ease-out", open && "rotate-90")}
 					/>
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<SidebarMenuSub>
-						{playerSubs.map((item) => (
-							<SettingsNavSubItem key={item.to} {...item} />
-						))}
+						<SettingsNavSubItem to="/player/general" label={t.sidebar.general} icon={RiMusic2Line} />
+						<SettingsNavSubItem to="/player/lyrics" label={t.sidebar.lyrics} icon={RiChatQuoteLine} />
 					</SidebarMenuSub>
 				</CollapsibleContent>
 			</Collapsible>
@@ -182,6 +163,7 @@ const PlayerNav = memo(function PlayerNav() {
 });
 
 const ApiIntegrationsNav = memo(function ApiIntegrationsNav() {
+	const { t } = useTranslation();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const isSectionActive = pathname.startsWith("/api-integrations");
 	const [open, setOpen] = useState(isSectionActive);
@@ -195,22 +177,21 @@ const ApiIntegrationsNav = memo(function ApiIntegrationsNav() {
 			<Collapsible open={open} onOpenChange={setOpen} className="group/collapsible w-full">
 				<CollapsibleTrigger render={<SidebarMenuButton isActive={isSectionActive} />}>
 					<RiShieldKeyholeLine />
-					<span>API & Integrations</span>
+					<span>{t.sidebar.apiIntegrations}</span>
 					<RiArrowRightSLine
 						className={cn("ml-auto transition-transform duration-150 ease-out", open && "rotate-90")}
 					/>
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<SidebarMenuSub>
-						{apiCoreSubs.map((item) => (
-							<SettingsNavSubItem key={item.to} {...item} />
-						))}
+						<SettingsNavSubItem to="/api-integrations/api" label={t.sidebar.api} icon={RiServerLine} />
+						<SettingsNavSubItem to="/api-integrations/authentication" label={t.sidebar.authentication} icon={RiKey2Line} />
 						<li className="px-2 pt-2 pb-0.5" aria-hidden>
-							<span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">Integrations</span>
+							<span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">{t.sidebar.apiIntegrations}</span>
 						</li>
-						{apiIntegrationSubs.map((item) => (
-							<SettingsNavSubItem key={item.to} {...item} />
-						))}
+						<SettingsNavSubItem to="/api-integrations/remote" label={t.sidebar.remote} icon={RiQrCodeLine} />
+						<SettingsNavSubItem to="/api-integrations/streamdeck" label={t.sidebar.streamDeck} icon={RiDashboardLine} />
+						<SettingsNavSubItem to="/api-integrations/obs" label={t.sidebar.obs} icon={RiLiveLine} />
 					</SidebarMenuSub>
 				</CollapsibleContent>
 			</Collapsible>
@@ -219,6 +200,7 @@ const ApiIntegrationsNav = memo(function ApiIntegrationsNav() {
 });
 
 const AppearanceNav = memo(function AppearanceNav() {
+	const { t } = useTranslation();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const isSectionActive = pathname.startsWith("/appearance");
 	const [open, setOpen] = useState(isSectionActive);
@@ -232,16 +214,15 @@ const AppearanceNav = memo(function AppearanceNav() {
 			<Collapsible open={open} onOpenChange={setOpen} className="group/collapsible w-full">
 				<CollapsibleTrigger render={<SidebarMenuButton isActive={isSectionActive} />}>
 					<RiPaletteLine />
-					<span>Appearance</span>
+					<span>{t.sidebar.appearance}</span>
 					<RiArrowRightSLine
 						className={cn("ml-auto transition-transform duration-150 ease-out", open && "rotate-90")}
 					/>
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<SidebarMenuSub>
-						{appearanceSubs.map((item) => (
-							<SettingsNavSubItem key={item.to} {...item} />
-						))}
+						<SettingsNavSubItem to="/appearance/themes" label={t.sidebar.themes} icon={RiCodeSSlashLine} />
+						<SettingsNavSubItem to="/appearance/display" label={t.sidebar.display} icon={RiComputerLine} />
 					</SidebarMenuSub>
 				</CollapsibleContent>
 			</Collapsible>
@@ -250,38 +231,40 @@ const AppearanceNav = memo(function AppearanceNav() {
 });
 
 function SettingsLayout() {
+	const { t } = useTranslation();
+
 	useEffect(() => {
-		document.title = "YouTube Music - Settings";
-	}, []);
+		document.title = `${t.appName} - ${t.tray.settings}`;
+	}, [t.appName, t.tray.settings]);
 
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 
 	return (
 		<div className="absolute inset-0 flex h-full flex-col overflow-hidden bg-background">
-			<ControlBar title="Settings" />
+			<ControlBar title={t.tray.settings} />
 			<SidebarProvider className="min-h-0 flex-1" defaultOpen style={{ "--sidebar-width": "14rem" } as CSSProperties}>
 				<Sidebar collapsible="none" className="border-r border-sidebar-border">
 					<SidebarHeader className="gap-2 border-b border-sidebar-border p-3">
 						<div className="flex items-center gap-2 px-1">
 							<LogoIcon className="size-5 shrink-0" />
 							<div className="flex min-w-0 flex-col">
-								<span className="truncate text-xs font-medium text-sidebar-foreground">YouTube Music</span>
-								<span className="truncate text-[10px] text-muted-foreground">Desktop Settings</span>
+								<span className="truncate text-xs font-medium text-sidebar-foreground">{t.appName}</span>
+								<span className="truncate text-[10px] text-muted-foreground">{t.tray.settings}</span>
 							</div>
 						</div>
 					</SidebarHeader>
 					<SidebarContent>
 						<SidebarGroup>
-							<SidebarGroupLabel>Preferences</SidebarGroupLabel>
+							<SidebarGroupLabel>{t.sidebar.generic}</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu className="flex flex-col gap-1">
-									<SettingsNavItem {...tabs.generic} />
+									<SettingsNavItem to="/" label={t.sidebar.generic} icon={RiSettings3Line} />
 									<PlayerNav />
 									<AppearanceNav />
-									<SettingsNavItem {...tabs.discord} />
-									<SettingsNavItem {...tabs.lastfm} />
+									<SettingsNavItem to="/discord" label={t.sidebar.discord} icon={RiDiscordLine} />
+									<SettingsNavItem to="/lastfm" label={t.sidebar.lastfm} icon={RiAlbumLine} />
 									<ApiIntegrationsNav />
-									<SettingsNavItem {...tabs.about} />
+									<SettingsNavItem to="/about" label={t.sidebar.about} icon={RiInformationLine} />
 								</SidebarMenu>
 							</SidebarGroupContent>
 						</SidebarGroup>

@@ -33,6 +33,7 @@ const defaultSettings = {
 		disableHardwareAccel: false,
 		enableTaskbarProgress: true,
 		zoomFactor: 1,
+		language: "vi" as "vi" | "en",
 	},
 	trayView: {
 		pinned: false,

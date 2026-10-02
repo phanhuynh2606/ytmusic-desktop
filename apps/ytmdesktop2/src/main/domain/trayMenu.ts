@@ -2,7 +2,7 @@ import { BaseProvider } from "@main/core/baseProvider";
 import { serverMain } from "@main/ipc/serverEvents";
 import AppProvider from "@main/trpc/routers/app/service";
 import SettingsProvider from "@main/trpc/routers/settings/service";
-import translations from "@translations/index";
+import { getTranslations } from "@translations/index";
 import { Menu, shell } from "electron";
 
 export const createTrayMenu = (provider: BaseProvider) => {
@@ -11,16 +11,19 @@ export const createTrayMenu = (provider: BaseProvider) => {
 	const appProvider = provider.getProvider("app") as AppProvider;
 	const { app } = appProvider;
 	const update = provider.getProvider("update");
+	const lang = (sp.app as any).language ?? "vi";
+	const t = getTranslations(lang);
+
 	const menu = Menu.buildFromTemplate([
 		{
-			label: translations.appName,
-			sublabel: `Version: ${app.getVersion()}`,
+			label: t.appName,
+			sublabel: `${t.version}: ${app.getVersion()}`,
 			click: () => serverMain.emit("app.trayState", null, "visible"),
 		},
 		{
 			label: update.updateAvailable
-				? `Update Available - ${update.updateInfo?.version ? `Download v${update.updateInfo.version}` : "Download"}`
-				: "Check for Updates",
+				? `${t.tray.updateAvailable} - ${update.updateInfo?.version ? `v${update.updateInfo.version}` : ""}`
+				: t.tray.checkUpdates,
 			click: () => {
 				if (update.updateAvailable) void update.onAutoUpdateRun(null, false);
 				else void update.onCheckUpdate({ forceDialog: true });
@@ -30,7 +33,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			type: "separator",
 		},
 		{
-			label: "Auto Startup",
+			label: t.tray.autoStartup,
 			type: "checkbox",
 			checked: sp.app.autostart,
 			click: (item) => {
@@ -38,7 +41,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			},
 		},
 		{
-			label: "Auto Update",
+			label: t.tray.autoUpdate,
 			type: "checkbox",
 			checked: sp.app.autoupdate,
 			click: (item) => {
@@ -46,7 +49,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			},
 		},
 		{
-			label: "Enable Quit to Tray",
+			label: t.tray.quitToTray,
 			type: "checkbox",
 			checked: sp.app.minimizeTrayOverride,
 			click: (item) => {
@@ -57,7 +60,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			type: "separator",
 		},
 		{
-			label: "Settings",
+			label: t.tray.settings,
 			click: () => {
 				void appProvider.openSettingsWindow();
 			},
@@ -67,10 +70,10 @@ export const createTrayMenu = (provider: BaseProvider) => {
 		},
 		{
 			type: "submenu",
-			label: "Discord",
+			label: t.tray.discord,
 			submenu: [
 				{
-					label: "Show Presence",
+					label: t.tray.showPresence,
 					type: "checkbox",
 					checked: sp.discord.enabled,
 					click: (item) => {
@@ -78,7 +81,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 					},
 				},
 				{
-					label: "Show Buttons",
+					label: t.tray.showButtons,
 					type: "checkbox",
 					checked: sp.discord.buttons,
 					click: (item) => {
@@ -92,10 +95,10 @@ export const createTrayMenu = (provider: BaseProvider) => {
 		},
 		{
 			type: "submenu",
-			label: "Themes",
+			label: t.tray.themes,
 			submenu: [
 				{
-					label: "Enable Themes",
+					label: t.tray.enableThemes,
 					type: "checkbox",
 					checked: sp.themes.enabled,
 					click: (item) => {
@@ -103,14 +106,14 @@ export const createTrayMenu = (provider: BaseProvider) => {
 					},
 				},
 				{
-					label: "Open custom theme file",
+					label: t.tray.openCustomTheme,
 					enabled: sp.themes.enabled && sp.themes.selected === "custom" && !!sp.themes.customFile,
 					click: (item) => {
 						if (item.enabled && sp.themes?.customFile) void shell.openPath(sp.themes.customFile!);
 					},
 				},
 				{
-					label: "Change Theme",
+					label: t.tray.changeTheme,
 					enabled: sp.themes.enabled,
 					click: (item) => {
 						if (item.enabled) void appProvider.openSettingsWindow();
@@ -122,7 +125,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			type: "separator",
 		},
 		{
-			label: "Quit",
+			label: t.tray.quit,
 			click: () => serverMain.emit("app.quit", null, true),
 		},
 	]);

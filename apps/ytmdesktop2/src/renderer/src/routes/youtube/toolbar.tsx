@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useNavigation } from "@/hooks/use-navigation";
 import { useMainWindowState } from "@/hooks/use-settings";
 import { useTrack } from "@/hooks/use-track";
+import { useTranslation } from "@/hooks/use-translation";
 import { useUpdater } from "@/hooks/use-updater";
 import { useWindowControls } from "@/hooks/use-window-controls";
 
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/youtube/toolbar")({
 });
 
 function YoutubeToolbarPage() {
+	const { t } = useTranslation();
 	const appVersion = useMemo(() => window.api.version, []);
 	const isDarwin = useMemo(() => window.app.platform === "darwin", []);
 	const [state] = useMainWindowState();
@@ -36,6 +38,7 @@ function YoutubeToolbarPage() {
 					type="button"
 					className={cn("control-button self-center cursor-pointer", !canGoBack && "disabled")}
 					disabled={!canGoBack}
+					title={t.toolbar.back}
 					onClick={() => void goback()}
 				>
 					<ArrowLeftIcon />
@@ -43,7 +46,7 @@ function YoutubeToolbarPage() {
 				<div className="drag flex flex-1 items-center gap-2">
 					{!isDarwin && (
 						<div className="flex items-center gap-1">
-							<div className="-mt-px flex-none text-xs">Music Desktop App</div>
+							<div className="-mt-px flex-none text-xs">{t.appName}</div>
 							{appVersion !== undefined && <div className="text-xs text-white opacity-30">v{appVersion}</div>}
 						</div>
 					)}
@@ -73,16 +76,16 @@ function YoutubeToolbarPage() {
 								<>
 									<Spinner size="sm" />
 									<span>
-										Downloading Update v{updateInfo.version}... {progress.percent.toFixed(0).padStart(5)}%
+										{t.toolbar.downloadingUpdate} v{updateInfo.version}... {progress.percent.toFixed(0).padStart(5)}%
 									</span>
 								</>
 							) : status === "installing" ? (
 								<>
 									<Spinner size="sm" />
-									<span>Installing Update v{updateInfo.version}…</span>
+									<span>{t.toolbar.installingUpdate} v{updateInfo.version}…</span>
 								</>
 							) : (
-								<span className="truncate text-ellipsis">New Update v{updateInfo.version}</span>
+								<span className="truncate text-ellipsis">{t.toolbar.newUpdate} v{updateInfo.version}</span>
 							)}
 						</button>
 					)}
@@ -91,13 +94,13 @@ function YoutubeToolbarPage() {
 						<>
 							<div className="h-6 w-px bg-gray-600" />
 							<div className="flex items-center gap-1">
-								<button type="button" className="control-button" onClick={() => void minimize()}>
+								<button type="button" className="control-button" title={t.toolbar.minimize} onClick={() => void minimize()}>
 									<Minimize2 />
 								</button>
-								<button type="button" className="control-button" onClick={() => void maximize()}>
+								<button type="button" className="control-button" title={t.toolbar.maximize} onClick={() => void maximize()}>
 									<MaximizeIcon />
 								</button>
-								<button type="button" className="control-button control-button-danger" onClick={() => void quit()}>
+								<button type="button" className="control-button control-button-danger" title={t.toolbar.close} onClick={() => void quit()}>
 									<XIcon />
 								</button>
 							</div>

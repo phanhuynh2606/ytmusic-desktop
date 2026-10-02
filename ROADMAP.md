@@ -16,10 +16,10 @@ File này lưu trữ danh sách tính năng theo dõi tiến độ phát triển
 ## 🚀 Giai đoạn 1: Ưu tiên triển khai ngay (Phase 1: Quick Wins)
 
 ### 1. 🇻🇳 Hỗ trợ Tiếng Việt (i18n Localization)
-- [ ] Xây dựng bộ từ điển Tiếng Việt đầy đủ tại `apps/ytmdesktop2/src/translations/vi-vn.json`.
-- [ ] Cải tiến hệ thống `src/translations/index.ts` để nạp động ngôn ngữ theo cài đặt thay vì chỉ hardcode tiếng Anh.
-- [ ] Bổ sung mục chọn ngôn ngữ **(Tiếng Việt / English)** trong bảng Cài đặt (Settings).
-- [ ] Lưu lựa chọn ngôn ngữ vào `settings store` để giữ nguyên khi khởi động lại app.
+- [x] Xây dựng bộ từ điển Tiếng Việt đầy đủ tại `apps/ytmdesktop2/src/translations/vi-vn.json`.
+- [x] Cải tiến hệ thống `src/translations/index.ts` để nạp động ngôn ngữ theo cài đặt thay vì chỉ hardcode tiếng Anh.
+- [x] Bổ sung mục chọn ngôn ngữ **(Tiếng Việt / English)** trong bảng Cài đặt (Settings).
+- [x] Lưu lựa chọn ngôn ngữ vào `settings store` để giữ nguyên khi khởi động lại app.
 
 ### 2. 🎨 Bộ Theme độc quyền (Preset Themes)
 - [ ] Tích hợp sẵn theme **OLED Pure Black** (nền đen sâu 100%, tăng tương phản, siêu tiết kiệm pin).
