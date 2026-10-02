@@ -2,7 +2,8 @@ import { EventEmitter } from "node:events";
 import { AfterInit, BaseProvider, OnDestroy } from "@main/core/baseProvider";
 import { serverMain } from "@main/ipc/serverEvents";
 import { trackService } from "@main/trpc/routers/track";
-import type { App } from "electron";
+import { createAppWindow } from "@main/windows/windowUtils";
+import type { App, BrowserWindow } from "electron";
 
 export interface SleepTimerState {
 	active: boolean;
@@ -29,9 +30,44 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 	private intervalId: NodeJS.Timeout | null = null;
 	private trackOffHandler: (() => void) | null = null;
 	private readonly emitter = new EventEmitter();
+	private dialogWindow: BrowserWindow | null = null;
 
 	constructor(private electronApp: App) {
 		super("sleepTimer");
+	}
+
+	async openDialog() {
+		if (this.dialogWindow && !this.dialogWindow.isDestroyed()) {
+			this.dialogWindow.focus();
+			return;
+		}
+
+		this.dialogWindow = await createAppWindow({
+			path: "/sleeptimer",
+			width: 350,
+			height: 440,
+			minWidth: 350,
+			minHeight: 440,
+			maxWidth: 350,
+			maxHeight: 440,
+			show: true,
+			showTaskBar: false,
+			minimizeable: false,
+			maximizeable: false,
+		});
+
+		this.dialogWindow.setResizable(false);
+		this.dialogWindow.setAlwaysOnTop(true, "floating");
+		this.dialogWindow.on("closed", () => {
+			this.dialogWindow = null;
+		});
+	}
+
+	closeDialog() {
+		if (this.dialogWindow && !this.dialogWindow.isDestroyed()) {
+			this.dialogWindow.close();
+			this.dialogWindow = null;
+		}
 	}
 
 	async AfterInit() {

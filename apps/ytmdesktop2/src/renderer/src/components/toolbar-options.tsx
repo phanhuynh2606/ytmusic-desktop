@@ -35,6 +35,8 @@ export function ToolbarOptions() {
 		onSuccess: () => void refetchMiniPlayer(),
 	});
 
+	const { mutateAsync: openSleepDialog } = trpc.sleepTimer.openDialog.useMutation();
+
 	return (
 		<div className="flex flex-row items-center gap-2">
 			{/* Nút Mini Player nổi */}
@@ -44,63 +46,37 @@ export function ToolbarOptions() {
 				className={`control-button h-4 flex items-center justify-center cursor-pointer ${
 					miniPlayerState?.isVisible ? "text-red-400 bg-red-500/15 rounded" : ""
 				}`}
-				title="Bật/Tắt Cửa sổ Mini Player nổi (Always-on-top)"
+				title="Cửa sổ Mini Player nổi (Always-on-top) - Bấm để Bật/Tắt"
 			>
 				<PictureInPicture2 className="size-3.5" />
 			</button>
 
-			{/* Nút Hẹn giờ tắt nhạc (Sleep Timer: Quick-Cycle 1-Click & Cancel) */}
-			<div className="flex items-center">
-				<button
-					type="button"
-					onClick={() => {
-						if (!sleepState?.active) {
-							void setTimer({ durationMinutes: 15 });
-						} else if (sleepState.targetDurationMinutes === 15) {
-							void setTimer({ durationMinutes: 30 });
-						} else if (sleepState.targetDurationMinutes === 30) {
-							void setTimer({ durationMinutes: 45 });
-						} else if (sleepState.targetDurationMinutes === 45) {
-							void setTimer({ durationMinutes: 60 });
-						} else if (sleepState.targetDurationMinutes === 60) {
-							void setTimer({ trackEnd: true });
-						} else {
-							void cancelTimer();
-						}
-					}}
-					className={`control-button relative h-4 flex items-center gap-1.5 px-2 !w-auto cursor-pointer transition-colors ${
-						sleepState?.active ? "text-amber-400 bg-amber-500/20 rounded" : ""
-					}`}
-					title={
-						sleepState?.active
-							? `Đang đếm ngược: ${
-									sleepState.trackEnd
-										? "Hết bài"
-										: `${Math.floor(sleepState.remainingSeconds / 60)}:${(sleepState.remainingSeconds % 60).toString().padStart(2, "0")}`
-								} (Bấm để chuyển mốc tiếp theo)`
-							: "Hẹn giờ tắt nhạc (Bấm để chọn 15p, 30p, 45p, 1h, Hết bài)"
-					}
-				>
-					<TimerIcon className="size-3.5" />
-					{sleepState?.active && (
-						<span className="text-[11px] font-mono font-medium">
-							{sleepState.trackEnd
-								? "Hết bài"
-								: `${Math.floor(sleepState.remainingSeconds / 60)}:${(sleepState.remainingSeconds % 60).toString().padStart(2, "0")}`}
-						</span>
-					)}
-				</button>
+			{/* Nút Hẹn giờ tắt nhạc (Mở Dialog chọn mốc chuyên nghiệp) */}
+			<button
+				type="button"
+				onClick={() => void openSleepDialog()}
+				className={`control-button relative h-4 flex items-center gap-1.5 px-2 !w-auto cursor-pointer transition-colors ${
+					sleepState?.active ? "text-amber-400 bg-amber-500/20 rounded" : ""
+				}`}
+				title={
+					sleepState?.active
+						? `Đang hẹn giờ: ${
+								sleepState.trackEnd
+									? "Hết bài hát"
+									: `${Math.floor(sleepState.remainingSeconds / 60)}:${(sleepState.remainingSeconds % 60).toString().padStart(2, "0")}`
+							} (Bấm để xem chi tiết / đổi mốc / hủy)`
+						: "Hẹn giờ tắt nhạc (Sleep Timer) - Bấm để mở bảng chọn mốc"
+				}
+			>
+				<TimerIcon className="size-3.5" />
 				{sleepState?.active && (
-					<button
-						type="button"
-						onClick={() => void cancelTimer()}
-						title="Hủy hẹn giờ tắt nhạc"
-						className="size-4 -ml-1 flex items-center justify-center text-amber-400/80 hover:text-red-400 hover:bg-white/10 rounded cursor-pointer transition-colors text-[10px]"
-					>
-						✕
-					</button>
+					<span className="text-[11px] font-mono font-medium">
+						{sleepState.trackEnd
+							? "Hết bài"
+							: `${Math.floor(sleepState.remainingSeconds / 60)}:${(sleepState.remainingSeconds % 60).toString().padStart(2, "0")}`}
+					</span>
 				)}
-			</div>
+			</button>
 			{/* Nút Last.fm */}
 			<button
 				type="button"

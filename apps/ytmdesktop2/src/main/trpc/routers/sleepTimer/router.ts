@@ -24,6 +24,14 @@ export const sleepTimerRouter = router({
 		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
 		return sleepTimer.cancelTimer();
 	}),
+	openDialog: publicProcedure.mutation(({ ctx }) => {
+		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
+		return sleepTimer.openDialog();
+	}),
+	closeDialog: publicProcedure.mutation(({ ctx }) => {
+		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
+		return sleepTimer.closeDialog();
+	}),
 	onStateChange: publicProcedure.subscription(({ ctx }) => {
 		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
 		return observable<SleepTimerState>((emit) => {

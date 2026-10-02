@@ -1,22 +1,23 @@
 import { toAppThumbUrl } from "@shared/media/appThumbUrl";
 import { createFileRoute } from "@tanstack/react-router";
+import { cva } from "class-variance-authority";
 import { intervalToDuration } from "date-fns";
 import { clamp } from "lodash-es";
+import { Pin, PinOff, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import {
-	Maximize2,
-	Minimize2,
-	Pause,
-	Pin,
-	PinOff,
-	Play,
-	SkipBack,
-	SkipForward,
-	Sliders,
-	Volume2,
-	VolumeX,
-	X,
-} from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+	type ButtonHTMLAttributes,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import LikeIcon from "@/assets/icons/like.svg?react";
+import NextIcon from "@/assets/icons/next.svg?react";
+import PauseIcon from "@/assets/icons/pause.svg?react";
+import PlayIcon from "@/assets/icons/play.svg?react";
+import PrevIcon from "@/assets/icons/prev.svg?react";
 import { useTrack, useTrackState } from "@/hooks/use-track";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
@@ -66,6 +67,135 @@ function formatTime(seconds: number): string {
 	return parts.join(":");
 }
 
+const ART_EASE = [0.16, 1, 0.3, 1] as const;
+const ART_DURATION = 0.28;
+
+function useReadyImage(src: string | null | undefined): string | null {
+	const [ready, setReady] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (!src) {
+			setReady(null);
+			return;
+		}
+		let cancelled = false;
+		const img = new Image();
+		const done = () => {
+			if (!cancelled) setReady(src);
+		};
+		img.onload = done;
+		img.onerror = done;
+		img.src = src;
+		if (img.complete) done();
+		return () => {
+			cancelled = true;
+			img.onload = null;
+			img.onerror = null;
+		};
+	}, [src]);
+
+	return ready;
+}
+
+function useAlignedArtDisplay(thumbnail: string | null | undefined, liveAccent: string | null) {
+	const loadedSrc = useReadyImage(thumbnail);
+	const [display, setDisplay] = useState<{ src: string | null; accent: string | null }>({ src: null, accent: null });
+
+	useLayoutEffect(() => {
+		const commit = (src: string | null, accent: string | null) => {
+			setDisplay((prev) => (prev.src === src && prev.accent === accent ? prev : { src, accent }));
+		};
+
+		if (!thumbnail) {
+			commit(null, null);
+			return;
+		}
+		if (loadedSrc !== thumbnail) return;
+
+		if (liveAccent) {
+			commit(loadedSrc, liveAccent);
+			return;
+		}
+
+		const timer = window.setTimeout(() => commit(loadedSrc, liveAccent), 80);
+		return () => clearTimeout(timer);
+	}, [thumbnail, loadedSrc, liveAccent]);
+
+	return display;
+}
+
+function BleedArtBackground({ src, accent }: { src: string | null; accent: string | null }) {
+	return (
+		<div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+			<AnimatePresence mode="wait">
+				{src ? (
+					<motion.div
+						key={src}
+						className="absolute inset-0"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: ART_DURATION, ease: ART_EASE }}
+					>
+						<div className="absolute inset-0 scale-110 bg-cover bg-center" style={{ backgroundImage: `url(${src})` }} />
+						<div className="absolute inset-0 scale-125 bg-cover bg-center opacity-75 blur-2xl" style={{ backgroundImage: `url(${src})` }} />
+					</motion.div>
+				) : (
+					<motion.div
+						key="empty-bleed"
+						className="absolute inset-0 bg-neutral-900"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: ART_DURATION, ease: ART_EASE }}
+					/>
+				)}
+			</AnimatePresence>
+			<motion.div
+				className="absolute inset-0"
+				initial={false}
+				animate={{
+					backgroundColor: accent ?? "var(--accent, #6366f1)",
+					opacity: accent ? 0.28 : 0,
+				}}
+				transition={{ duration: ART_DURATION, ease: ART_EASE }}
+			/>
+			<div className="absolute inset-0 bg-neutral-950/75 backdrop-blur-md" />
+		</div>
+	);
+}
+
+const playerButtonVariants = cva(
+	[
+		"inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground transition-[transform,background-color,color] duration-100",
+		"enabled:hover:bg-foreground/10 enabled:active:scale-95",
+		"disabled:pointer-events-none disabled:opacity-50",
+		"[&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
+		"data-[active=true]:text-accent",
+	].join(" "),
+	{
+		variants: {
+			variant: {
+				default: "",
+				hero: "size-8.5 bg-foreground/10 [&_svg]:size-4",
+			},
+		},
+		defaultVariants: { variant: "default" },
+	},
+);
+
+function PlayerBtn({
+	className,
+	variant,
+	active,
+	type = "button",
+	...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "default" | "hero"; active?: boolean }) {
+	return (
+		<button type={type} data-active={active ? "true" : undefined} className={cn(playerButtonVariants({ variant }), className)} {...props} />
+	);
+}
+
 const OPACITY_STEPS = [1, 0.85, 0.7, 0.5];
 
 function MiniPlayerPage() {
@@ -87,28 +217,48 @@ function MiniPlayerPage() {
 	const { mutateAsync: next } = trpc.track.next.useMutation();
 	const { mutateAsync: prev } = trpc.track.prev.useMutation();
 	const { mutateAsync: seek } = trpc.track.seek.useMutation();
+	const { mutateAsync: like } = trpc.track.like.useMutation();
+	const { mutateAsync: dislike } = trpc.track.dislike.useMutation();
 
-	// Lyrics state
+	const [trackAccent, setTrackAccent] = useState<string | null>(null);
 	const [lrcLines, setLrcLines] = useState<LrcLine[]>([]);
 	const [lyricsLoading, setLyricsLoading] = useState(false);
 	const lastFetchedIdRef = useRef<string | null>(null);
 
-	const title = track?.video?.title ?? "Chưa phát nhạc";
-	const artist = track?.video?.author ?? "Music Desktop App";
+	const title = track?.video?.title ?? "Chưa phát bài hát";
+	const artist = track?.video?.author ?? "YouTube Music";
 	const thumbnail = toAppThumbUrl(track?.meta?.thumbnail);
 	const playing = !!playState?.playing;
 	const duration = playState?.duration || Number(track?.meta?.duration) || 0;
 	const progress = playState?.progress ?? 0;
+	const hasLike = typeof playState?.liked === "boolean";
+	const hasDislike = typeof playState?.disliked === "boolean";
+
+	const liveAccent = trackAccent || playState?.accent || null;
+	const { src: artSrc, accent: displayAccent } = useAlignedArtDisplay(thumbnail, liveAccent);
 
 	const alwaysOnTop = playerState?.alwaysOnTop ?? true;
 	const currentOpacity = playerState?.opacity ?? 0.95;
 
-	// Cycle opacity
-	const handleCycleOpacity = () => {
-		const currentIdx = OPACITY_STEPS.findIndex((s) => Math.abs(s - currentOpacity) < 0.08);
-		const nextIdx = (currentIdx + 1) % OPACITY_STEPS.length;
-		void setOpacity({ opacity: OPACITY_STEPS[nextIdx] });
-	};
+	// Fetch track accent
+	useEffect(() => {
+		if (!thumbnail) {
+			setTrackAccent(null);
+			return;
+		}
+		let cancelled = false;
+		void utils.track.accent
+			.fetch()
+			.then((clr) => {
+				if (!cancelled) setTrackAccent(clr || null);
+			})
+			.catch(() => {
+				if (!cancelled) setTrackAccent(null);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [thumbnail, utils.track.accent]);
 
 	// Fetch lyrics when track changes
 	const videoId = track?.video?.videoId;
@@ -136,7 +286,6 @@ function MiniPlayerPage() {
 		fetch(`https://lrclib.net/api/get?${searchParams.toString()}`)
 			.then(async (res) => {
 				if (!res.ok) {
-					// Fallback search
 					const fallbackRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(`${track.video.title} ${track.video.author || ""}`)}`);
 					if (!fallbackRes.ok) return null;
 					const hits = await fallbackRes.json();
@@ -173,7 +322,7 @@ function MiniPlayerPage() {
 		const curMs = progress * 1000;
 		let line = lrcLines[0];
 		for (let i = 0; i < lrcLines.length; i++) {
-			if (lrcLines[i].timeMs <= curMs + 300) {
+			if (lrcLines[i].timeMs <= curMs + 200) {
 				line = lrcLines[i];
 			} else {
 				break;
@@ -182,102 +331,116 @@ function MiniPlayerPage() {
 		return line?.text || null;
 	}, [lrcLines, progress]);
 
-	// Progress percentage
 	const progressPercent = duration > 0 ? clamp((progress / duration) * 100, 0, 100) : 0;
 
+	const handleCycleOpacity = () => {
+		const currentIdx = OPACITY_STEPS.findIndex((s) => Math.abs(s - currentOpacity) < 0.08);
+		const nextIdx = (currentIdx + 1) % OPACITY_STEPS.length;
+		void setOpacity({ opacity: OPACITY_STEPS[nextIdx] });
+	};
+
 	return (
-		<div
-			className="drag h-screen w-screen p-2.5 flex flex-col justify-between overflow-hidden bg-neutral-950/90 text-white select-none backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl transition-opacity duration-200"
-		>
-			{/* Top Header: Controls (drag region / no-drag buttons) */}
-			<div className="flex items-center justify-between text-xs text-neutral-400 pb-1.5 border-b border-white/5">
-				<div className="flex items-center gap-1.5 font-medium tracking-wide text-[11px] text-neutral-300">
-					<span className="inline-block size-2 rounded-full bg-red-500 animate-pulse" />
-					<span>Mini Player</span>
-				</div>
+		<div className="drag relative h-screen w-screen overflow-hidden rounded-2xl border border-white/15 shadow-2xl select-none flex">
+			{/* Dynamic Bleed Art (Đồng bộ hiệu ứng nền mờ sang trọng như System Tray) */}
+			<BleedArtBackground src={artSrc} accent={displayAccent} />
 
-				<div className="no-drag flex items-center gap-1">
-					{/* Opacity button */}
-					<button
-						type="button"
-						onClick={handleCycleOpacity}
-						title={`Độ mờ: ${Math.round(currentOpacity * 100)}% (Bấm để đổi)`}
-						className="size-6 flex items-center justify-center rounded-md hover:bg-white/10 hover:text-white transition-colors cursor-pointer text-[10px] font-mono"
-					>
-						{Math.round(currentOpacity * 100)}%
-					</button>
-
-					{/* Pin Always on Top */}
-					<button
-						type="button"
-						onClick={() => void setAlwaysOnTop({ alwaysOnTop: !alwaysOnTop })}
-						title={alwaysOnTop ? "Đang ghim trên cùng (Click để bỏ ghim)" : "Ghim cửa sổ trên cùng"}
-						className={cn(
-							"size-6 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-							alwaysOnTop ? "text-amber-400 bg-amber-500/20 hover:bg-amber-500/30" : "hover:bg-white/10 hover:text-white",
-						)}
-					>
-						{alwaysOnTop ? <Pin className="size-3" /> : <PinOff className="size-3" />}
-					</button>
-
-					{/* Close Mini Player */}
-					<button
-						type="button"
-						onClick={() => void hideMiniPlayer()}
-						title="Đóng Mini Player"
-						className="size-6 flex items-center justify-center rounded-md hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer"
-					>
-						<X className="size-3.5" />
-					</button>
-				</div>
+			{/* Left Accent Pill */}
+			<div className="relative z-10 flex shrink-0 items-stretch py-2.5 pl-2.5 pr-1" aria-hidden>
+				<motion.div
+					className="w-1.5 rounded-full"
+					initial={false}
+					animate={{ backgroundColor: displayAccent ?? "var(--accent, #f43f5e)" }}
+					transition={{ duration: ART_DURATION, ease: ART_EASE }}
+				/>
 			</div>
 
-			{/* Main Body: Cover art + Info + Synced Lyrics */}
-			<div className="flex items-center gap-3 py-1">
-				{/* Cover Thumbnail */}
-				<div className="relative size-14 shrink-0 rounded-xl overflow-hidden bg-neutral-900 border border-white/10 shadow-md">
-					{thumbnail ? (
-						<img src={thumbnail} alt={title} className="size-full object-cover pointer-events-none" />
-					) : (
-						<div className="size-full flex items-center justify-center text-xs font-semibold text-neutral-600">
-							YTM
+			{/* Content Area */}
+			<div className="relative z-10 flex flex-1 flex-col justify-between p-2.5 pl-1.5">
+				{/* Header: Track Info + Pin/Opacity Controls */}
+				<div className="flex items-start justify-between gap-2">
+					<div className="flex items-center gap-2.5 min-w-0 flex-1">
+						{/* Cover Art bo góc cao cấp */}
+						<div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-neutral-800/80 ring-1 ring-white/10 shadow-sm">
+							{artSrc ? (
+								<img src={artSrc} alt="" className="size-full object-cover pointer-events-none" />
+							) : (
+								<div className="flex size-full items-center justify-center text-[10px] font-bold text-neutral-400">
+									YTM
+								</div>
+							)}
 						</div>
-					)}
+
+						{/* Title & Artist & Synced Lyrics */}
+						<div className="flex-1 min-w-0">
+							<div className="text-xs font-semibold text-foreground truncate leading-tight drop-shadow-sm" title={title}>
+								{title}
+							</div>
+							<div className="text-[11px] text-muted-foreground truncate mt-0.5" title={artist}>
+								{artist}
+							</div>
+
+							{/* Synced Lyrics Line (Phát sáng đồng bộ màu) */}
+							<div className="h-4 flex items-center overflow-hidden mt-0.5">
+								{currentLine ? (
+									<span
+										className="text-[11px] font-medium truncate drop-shadow"
+										style={{ color: displayAccent ?? "#10b981" }}
+									>
+										🎵 {currentLine}
+									</span>
+								) : lyricsLoading ? (
+									<span className="text-[10px] text-muted-foreground/70 italic">Đang tải lời bài hát...</span>
+								) : (
+									<span className="text-[10px] text-muted-foreground/60 italic">Music Desktop App</span>
+								)}
+							</div>
+						</div>
+					</div>
+
+					{/* Header Actions (no-drag) */}
+					<div className="no-drag flex items-center gap-1 shrink-0 bg-background/40 backdrop-blur-md rounded-lg p-0.5 border border-white/10">
+						{/* Opacity */}
+						<button
+							type="button"
+							onClick={handleCycleOpacity}
+							title={`Độ mờ: ${Math.round(currentOpacity * 100)}% (Bấm để đổi)`}
+							className="size-5.5 flex items-center justify-center rounded text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-white/10 cursor-pointer transition-colors"
+						>
+							{Math.round(currentOpacity * 100)}%
+						</button>
+
+						{/* Pin Always on top */}
+						<button
+							type="button"
+							onClick={() => void setAlwaysOnTop({ alwaysOnTop: !alwaysOnTop })}
+							title={alwaysOnTop ? "Đang ghim trên cùng (Click để bỏ ghim)" : "Ghim cửa sổ trên cùng"}
+							className={cn(
+								"size-5.5 flex items-center justify-center rounded cursor-pointer transition-colors",
+								alwaysOnTop ? "text-amber-400 bg-amber-500/20" : "text-muted-foreground hover:text-foreground hover:bg-white/10",
+							)}
+						>
+							{alwaysOnTop ? <Pin className="size-3" /> : <PinOff className="size-3" />}
+						</button>
+
+						{/* Close */}
+						<button
+							type="button"
+							onClick={() => void hideMiniPlayer()}
+							title="Đóng Mini Player"
+							className="size-5.5 flex items-center justify-center rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/15 cursor-pointer transition-colors"
+						>
+							<X className="size-3" />
+						</button>
+					</div>
 				</div>
 
-				{/* Title, Artist and Lyrics */}
-				<div className="flex-1 min-w-0 flex flex-col justify-center">
-					<div className="font-semibold text-xs text-white truncate drop-shadow-sm" title={title}>
-						{title}
-					</div>
-					<div className="text-[11px] text-neutral-400 truncate mt-0.5" title={artist}>
-						{artist}
-					</div>
-
-					{/* Mini Lyrics Line */}
-					<div className="mt-1 h-4 flex items-center overflow-hidden">
-						{currentLine ? (
-							<span className="text-[11px] font-medium text-emerald-400 truncate animate-in fade-in duration-300">
-								🎵 {currentLine}
-							</span>
-						) : lyricsLoading ? (
-							<span className="text-[10px] text-neutral-500 italic">Đang tải lời bài hát...</span>
-						) : (
-							<span className="text-[10px] text-neutral-500 italic">Music Desktop App</span>
-						)}
-					</div>
-				</div>
-			</div>
-
-			{/* Bottom: Progress bar + Playback Controls */}
-			<div className="no-drag flex flex-col gap-1.5">
-				{/* Progress bar */}
-				<div className="flex items-center gap-2">
-					<span className="text-[10px] font-mono text-neutral-400 w-8 text-right">
+				{/* Progress Scrubber (Thanh tua nhạc mỏng tinh tế) */}
+				<div className="no-drag flex items-center gap-2 pt-1">
+					<span className="w-8 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
 						{formatTime(progress)}
 					</span>
 					<div
-						className="relative flex-1 h-1.5 bg-neutral-800 rounded-full cursor-pointer overflow-hidden group"
+						className="relative flex-1 h-1 bg-foreground/15 rounded-full cursor-pointer overflow-hidden group hover:h-1.5 transition-all"
 						onClick={(e) => {
 							if (duration <= 0) return;
 							const rect = e.currentTarget.getBoundingClientRect();
@@ -287,46 +450,70 @@ function MiniPlayerPage() {
 						}}
 					>
 						<div
-							className="h-full bg-red-500 group-hover:bg-red-400 rounded-full transition-all duration-100"
-							style={{ width: `${progressPercent}%` }}
+							className="h-full rounded-full transition-[width] duration-100"
+							style={{
+								width: `${progressPercent}%`,
+								backgroundColor: displayAccent ?? "var(--accent, #f43f5e)",
+							}}
 						/>
 					</div>
-					<span className="text-[10px] font-mono text-neutral-400 w-8">
+					<span className="w-8 font-mono text-[10px] tabular-nums text-muted-foreground">
 						{formatTime(duration)}
 					</span>
 				</div>
 
-				{/* Controls */}
-				<div className="flex items-center justify-center gap-4 pt-0.5">
-					<button
-						type="button"
-						disabled={!track}
-						onClick={() => void prev()}
-						title="Bài trước"
-						className="size-7 flex items-center justify-center rounded-full text-neutral-300 hover:text-white hover:bg-white/10 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
-					>
-						<SkipBack className="size-3.5 fill-current" />
-					</button>
+				{/* Transport Controls (Segmented Dock y hệt System Tray) */}
+				<div className="no-drag flex justify-center pt-0.5">
+					<div className="flex items-center gap-1 rounded-full border border-border/50 bg-background/50 px-2 py-0.5 shadow-sm backdrop-blur-md">
+						{hasLike && (
+							<PlayerBtn
+								active={!!playState?.liked}
+								disabled={!track}
+								aria-label="Like"
+								style={playState?.liked && displayAccent ? { color: displayAccent } : undefined}
+								onClick={() => void like({ liked: !playState?.liked })}
+							>
+								<LikeIcon />
+							</PlayerBtn>
+						)}
 
-					<button
-						type="button"
-						disabled={!track}
-						onClick={() => void (playing ? pause() : play())}
-						title={playing ? "Tạm dừng" : "Phát"}
-						className="size-8 flex items-center justify-center rounded-full bg-white text-black hover:scale-105 active:scale-95 disabled:opacity-40 shadow-lg transition-all cursor-pointer"
-					>
-						{playing ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current ml-0.5" />}
-					</button>
+						<PlayerBtn disabled={!track} aria-label="Previous" onClick={() => void prev()}>
+							<PrevIcon />
+						</PlayerBtn>
 
-					<button
-						type="button"
-						disabled={!track}
-						onClick={() => void next()}
-						title="Bài tiếp theo"
-						className="size-7 flex items-center justify-center rounded-full text-neutral-300 hover:text-white hover:bg-white/10 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
-					>
-						<SkipForward className="size-3.5 fill-current" />
-					</button>
+						<PlayerBtn
+							variant="hero"
+							disabled={!track}
+							aria-label={playing ? "Pause" : "Play"}
+							style={
+								displayAccent
+									? {
+											backgroundColor: `color-mix(in oklab, ${displayAccent} 28%, transparent)`,
+											color: displayAccent,
+										}
+									: undefined
+							}
+							onClick={() => void (!playing ? play() : pause())}
+						>
+							{playing ? <PauseIcon /> : <PlayIcon />}
+						</PlayerBtn>
+
+						<PlayerBtn disabled={!track} aria-label="Next" onClick={() => void next()}>
+							<NextIcon />
+						</PlayerBtn>
+
+						{hasDislike && (
+							<PlayerBtn
+								active={!!playState?.disliked}
+								disabled={!track}
+								aria-label="Dislike"
+								style={playState?.disliked && displayAccent ? { color: displayAccent } : undefined}
+								onClick={() => void dislike({ disliked: !playState?.disliked })}
+							>
+								<LikeIcon className="rotate-180" />
+							</PlayerBtn>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>

@@ -5,20 +5,23 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
 import { useSettingsState } from "@/hooks/use-settings";
+import { useTranslation } from "@/hooks/use-translation";
 
 export const Route = createFileRoute("/_settings/player/general")({
 	component: PlayerGeneralSettingsPage,
 });
 
 function PlayerGeneralSettingsPage() {
+	const { t } = useTranslation();
+	const p = t.settings.playerSection;
 	const [resEnabled, , { isPending: resPending }] = useSettingsState("player.res.enabled", false);
 
 	return (
 		<>
 			<Card>
 				<CardHeader>
-					<CardTitle>Player</CardTitle>
-					<CardDescription>Playback behavior and video preferences.</CardDescription>
+					<CardTitle>{p.title}</CardTitle>
+					<CardDescription>{p.description}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<FieldGroup>
@@ -26,32 +29,32 @@ function PlayerGeneralSettingsPage() {
 							configKey="player.skipDisliked"
 							description={
 								<span className="inline-flex items-center gap-2">
-									Automatically skip tracks you disliked.
+									{p.skipDislikedDesc}
 									<Badge variant="outline">Experimental</Badge>
 								</span>
 							}
 						>
-							Skip disliked songs
+							{p.skipDisliked}
 						</SettingsCheckbox>
 						<SettingsCheckbox
 							configKey="volumeRatio.enabled"
-							description="Use an exponential volume curve for finer control than the default linear slider."
+							description={p.expVolumeDesc}
 						>
-							Exponential volume ratio
+							{p.expVolume}
 						</SettingsCheckbox>
-						<SettingsCheckbox configKey="app.enableTaskbarProgress" description="Show playback progress on the taskbar.">
-							Enable Taskbar Progress
+						<SettingsCheckbox configKey="app.enableTaskbarProgress" description={p.taskbarProgressDesc}>
+							{p.taskbarProgress}
 						</SettingsCheckbox>
 						<SettingsCheckbox
 							configKey="player.chromecastEnabled"
 							description={
 								<span className="inline-flex items-center gap-2">
-									Show YouTube Music Cast and talk to devices on this LAN. Restart required. Firewall must allow mDNS.
+									{p.chromecastDesc}
 									<Badge variant="outline">Experimental</Badge>
 								</span>
 							}
 						>
-							Enable Chromecast
+							{p.chromecast}
 						</SettingsCheckbox>
 					</FieldGroup>
 				</CardContent>
@@ -59,35 +62,35 @@ function PlayerGeneralSettingsPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Shared links</CardTitle>
-					<CardDescription>How ytmd:// links open and how YouTube Music share URLs are rewritten.</CardDescription>
+					<CardTitle>{p.sharedLinks}</CardTitle>
+					<CardDescription>{p.sharedLinksDesc}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<FieldGroup>
 						<SettingsSelect
 							configKey="player.deepLinkOpen"
 							defaultValue="ask"
-							label="When opening a shared link"
-							description="How ytmd:// share links behave when the app receives them."
+							label={p.openLinkAction}
+							description={p.openLinkDesc}
 							options={[
 								{
 									value: "ask",
-									label: "Ask first",
-									description: "Choose play now, add to queue, or cancel",
+									label: p.askFirst,
+									description: p.askFirstDesc,
 								},
 								{
 									value: "play",
-									label: "Play immediately",
-									description: "Start the track without a confirmation dialog",
+									label: p.playImmediate,
+									description: p.playImmediateDesc,
 								},
 							]}
 						/>
 						<SettingsCheckbox
 							configKey="player.replaceShareLinks"
 							defaultValue={true}
-							description="Rewrite the share dialog URL to ytmd:// so Copy opens this app."
+							description={p.replaceShareDesc}
 						>
-							Replace share links with ytmd://
+							{p.replaceShare}
 						</SettingsCheckbox>
 					</FieldGroup>
 				</CardContent>
@@ -95,22 +98,22 @@ function PlayerGeneralSettingsPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Video</CardTitle>
-					<CardDescription>Preferred resolution when available.</CardDescription>
+					<CardTitle>{p.video}</CardTitle>
+					<CardDescription>{p.videoDesc}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<FieldGroup>
-						<SettingsCheckbox configKey="player.res.enabled">Customize player video settings</SettingsCheckbox>
+						<SettingsCheckbox configKey="player.res.enabled">{p.customizeVideo}</SettingsCheckbox>
 						{resEnabled && !resPending && (
 							<SettingsSelect
 								configKey="player.res.prefer"
-								label="Preferred Video Resolution"
+								label={p.preferredRes}
 								options={[
 									{ value: "hd2160", label: "2160P UHD / 4K" },
 									{ value: "hd1440", label: "1440P QHD" },
 									{ value: "hd1080", label: "1080P FHD" },
 									{ value: "hd720", label: "720P HD" },
-									{ value: "auto", label: "Default" },
+									{ value: "auto", label: "Tự động / Mặc định" },
 								]}
 							/>
 						)}
@@ -120,3 +123,4 @@ function PlayerGeneralSettingsPage() {
 		</>
 	);
 }
+
