@@ -1,0 +1,168 @@
+// ==========================================
+// THEME: Cyberpunk Neon
+// Description: Tím hồng neon huyền ảo đồng bộ với nhận diện thương hiệu mới
+// ==========================================
+
+$neonPurple: #a855f7;
+$neonPink: #ec4899;
+$neonCyan: #06b6d4;
+$bgDarkSpace: #090614;
+$bgPanel: rgba(18, 12, 38, 0.92);
+$glowShadow: 0 0 16px rgba(168, 85, 247, 0.45);
+
+ytmusic-app {
+  --ytmusic-player-bar-background: #{$bgDarkSpace} !important;
+  background-color: $bgDarkSpace !important;
+}
+
+ytmusic-browse-response {
+  background: radial-gradient(circle at 10% 20%, rgba(168, 85, 247, 0.12) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.12) 0%, transparent 40%),
+              $bgDarkSpace !important;
+}
+
+ytmusic-player-page.ytmusic-app {
+  background: radial-gradient(circle at 50% 30%, rgba(168, 85, 247, 0.22) 0%, rgba(9, 6, 20, 0.98) 70%) !important;
+}
+
+.content.ytmusic-player-page {
+  padding: 0;
+  visibility: visible;
+  background: transparent;
+  @media screen and (max-width: 968px) {
+    #main-panel {
+      padding: 0 300px !important;
+      height: calc(6 / 16 * 100vw);
+    }
+  }
+}
+
+// Player Bar với viền phát sáng gradient Neon
+ytmusic-player-bar.ytmusic-app {
+  background: rgba(14, 9, 30, 0.94) !important;
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 -4px 20px rgba(168, 85, 247, 0.2);
+}
+
+#player-bar-background.ytmusic-app-layout {
+  background-color: transparent !important;
+}
+
+// Progress Bar Neon Gradient rực rỡ
+#progress-bar.ytmusic-player-bar {
+  --paper-slider-active-color: #{$neonPink};
+  --paper-slider-knob-color: #{$neonCyan};
+  --paper-slider-secondary-color: rgba(168, 85, 247, 0.35);
+  filter: drop-shadow(0 0 6px rgba(236, 72, 153, 0.8));
+  padding-right: 0 !important;
+  left: 0 !important;
+  right: -10px !important;
+  width: unset !important;
+  padding-left: 0 !important;
+
+  #sliderContainer {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+// Ảnh đại diện bài hát phát sáng viền neon
+.image.ytmusic-player-bar {
+  border-radius: 8px;
+  border: 1px solid rgba(168, 85, 247, 0.6);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+  transform: translate3d(0, 0, 1px);
+}
+
+// Queue
+ytmusic-player-queue {
+  padding: 10px 0;
+}
+
+ytmusic-player-queue-item {
+  --ytmusic-player-queue-item-thumbnail-size: 42px !important;
+  --ytmusic-list-item-height: 58px;
+  background: rgba(22, 14, 46, 0.6);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 10px;
+  transform: translate3d(0, 0, 1px);
+  opacity: 0.88;
+  margin-bottom: 8px;
+  transition: all 0.25s ease;
+
+  &:hover:not([selected]) {
+    background: rgba(35, 20, 75, 0.8) !important;
+    border-color: rgba(236, 72, 153, 0.6);
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.3);
+    opacity: 1;
+    transform: translateX(4px);
+  }
+
+  &[selected] {
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.35) 0%, rgba(236, 72, 153, 0.35) 100%) !important;
+    border-color: $neonPink;
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+    opacity: 1;
+  }
+}
+
+// Nav Bar
+ytmusic-nav-bar {
+  background: rgba(14, 9, 30, 0.94) !important;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.logo.ytmusic-nav-bar {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.9));
+}
+
+// Popups và Menu Dialogs
+tp-yt-paper-dialog,
+tp-yt-paper-listbox.ytmusic-menu-popup-renderer {
+  background-color: rgba(18, 12, 38, 0.96) !important;
+  border: 1px solid rgba(168, 85, 247, 0.5) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(168, 85, 247, 0.3) !important;
+  border-radius: 12px;
+}
+
+// Kích thước nút bấm và hiệu ứng Play Button
+$playerIconSize: 20px;
+$playerButtonSize: 42px;
+
+ytmusic-player-bar .play-pause-button.ytmusic-player-bar {
+  height: $playerButtonSize !important;
+  width: $playerButtonSize !important;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $neonPurple 0%, $neonPink 100%) !important;
+  box-shadow: 0 0 14px rgba(236, 72, 153, 0.6);
+
+  .yt-icon {
+    width: $playerIconSize !important;
+    height: $playerIconSize !important;
+    transform: none !important;
+    translate: none !important;
+    color: #ffffff !important;
+  }
+}
+
+#right-controls,
+.middle-controls-buttons {
+  --yt-icon-button-icon-height: #{$playerIconSize - 4px};
+  --yt-icon-button-icon-width: #{$playerIconSize - 4px};
+
+  .ytIconWrapperHost {
+    padding: 2px;
+    height: var(--yt-icon-button-icon-height) !important;
+    width: var(--yt-icon-button-icon-width) !important;
+  }
+}
+
+button.yt-icon-button > yt-icon {
+  height: $playerIconSize - 4px !important;
+  width: $playerIconSize - 4px !important;
+
+  svg {
+    stroke-width: 1px !important;
+  }
+}

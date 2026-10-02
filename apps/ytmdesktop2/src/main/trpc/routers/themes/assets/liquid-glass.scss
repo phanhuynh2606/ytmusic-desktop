@@ -1,0 +1,178 @@
+// ==========================================
+// THEME: iOS Liquid Glass
+// Description: Hiệu ứng kính lỏng Liquid Glass & Glassmorphism cao cấp phong cách iOS
+// ==========================================
+
+$liquidGlassBg: rgba(22, 22, 28, 0.65);
+$liquidGlassSurface: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+$liquidGlassBorder: rgba(255, 255, 255, 0.22);
+$liquidGlassShadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+$appleAccent: #fa2d48;
+
+ytmusic-app {
+  --ytmusic-player-bar-background: transparent !important;
+  background-color: #0b0b0e !important;
+}
+
+ytmusic-browse-response {
+  background: transparent !important;
+}
+
+ytmusic-player-page.ytmusic-app {
+  background: rgba(14, 14, 18, 0.75) !important;
+  backdrop-filter: blur(40px) saturate(220%);
+  -webkit-backdrop-filter: blur(40px) saturate(220%);
+}
+
+.content.ytmusic-player-page {
+  padding: 0;
+  visibility: visible;
+  background: transparent;
+  @media screen and (max-width: 968px) {
+    #main-panel {
+      padding: 0 300px !important;
+      height: calc(6 / 16 * 100vw);
+    }
+  }
+}
+
+// Thanh phát nhạc (Player Bar) thiết kế dạng thanh Liquid Glass nổi
+ytmusic-player-bar.ytmusic-app {
+  background: $liquidGlassBg !important;
+  backdrop-filter: blur(45px) saturate(220%);
+  -webkit-backdrop-filter: blur(45px) saturate(220%);
+  border-top: 1px solid $liquidGlassBorder;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+#player-bar-background.ytmusic-app-layout {
+  background-color: transparent !important;
+}
+
+// Thanh tiến trình phát nhạc chuẩn Apple Music với viền bóng
+#progress-bar.ytmusic-player-bar {
+  --paper-slider-active-color: rgba(255, 255, 255, 0.95);
+  --paper-slider-knob-color: #ffffff;
+  --paper-slider-secondary-color: rgba(255, 255, 255, 0.2);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  padding-right: 0 !important;
+  left: 0 !important;
+  right: -10px !important;
+  width: unset !important;
+  padding-left: 0 !important;
+
+  #sliderContainer {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+// Ảnh đại diện bài hát bo góc sâu chuẩn iOS
+.image.ytmusic-player-bar {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  transform: translate3d(0, 0, 1px);
+}
+
+// Queue - Các thẻ danh sách kính mờ
+ytmusic-player-queue {
+  padding: 12px 0;
+}
+
+ytmusic-player-queue-item {
+  --ytmusic-player-queue-item-thumbnail-size: 42px !important;
+  --ytmusic-list-item-height: 60px;
+  background: $liquidGlassSurface !important;
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  transform: translate3d(0, 0, 1px);
+  opacity: 0.92;
+  margin-bottom: 8px;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  &:hover:not([selected]) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+    border-color: rgba(255, 255, 255, 0.28);
+    transform: scale(1.01) translate3d(0, 0, 1px);
+    opacity: 1;
+  }
+
+  &[selected] {
+    background: linear-gradient(135deg, rgba(250, 45, 72, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%) !important;
+    border-color: rgba(250, 45, 72, 0.6);
+    box-shadow: 0 6px 20px rgba(250, 45, 72, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    opacity: 1;
+  }
+}
+
+// Nav Bar
+ytmusic-nav-bar {
+  background: $liquidGlassBg !important;
+  backdrop-filter: blur(45px) saturate(220%);
+  -webkit-backdrop-filter: blur(45px) saturate(220%);
+  border-bottom: 1px solid $liquidGlassBorder;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+// Dialogs và Popups dạng Apple Action Sheet / Popover
+tp-yt-paper-dialog,
+tp-yt-paper-listbox.ytmusic-menu-popup-renderer {
+  background: rgba(30, 30, 38, 0.82) !important;
+  backdrop-filter: blur(50px) saturate(220%) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(220%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border-radius: 18px;
+}
+
+// Nút bấm tròn đặc trưng iOS
+$playerIconSize: 20px;
+$playerButtonSize: 42px;
+
+ytmusic-player-bar .play-pause-button.ytmusic-player-bar {
+  height: $playerButtonSize !important;
+  width: $playerButtonSize !important;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
+    transform: scale(1.05);
+  }
+
+  .yt-icon {
+    width: $playerIconSize !important;
+    height: $playerIconSize !important;
+    transform: none !important;
+    translate: none !important;
+  }
+}
+
+#right-controls,
+.middle-controls-buttons {
+  --yt-icon-button-icon-height: #{$playerIconSize - 4px};
+  --yt-icon-button-icon-width: #{$playerIconSize - 4px};
+
+  .ytIconWrapperHost {
+    padding: 2px;
+    height: var(--yt-icon-button-icon-height) !important;
+    width: var(--yt-icon-button-icon-width) !important;
+  }
+}
+
+button.yt-icon-button > yt-icon {
+  height: $playerIconSize - 4px !important;
+  width: $playerIconSize - 4px !important;
+
+  svg {
+    stroke-width: 1px !important;
+  }
+}

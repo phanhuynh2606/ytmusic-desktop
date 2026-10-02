@@ -1,0 +1,153 @@
+// ==========================================
+// THEME: OLED Pure Black
+// Description: Nền đen sâu 100% #000000, tăng tương phản, siêu tiết kiệm pin
+// ==========================================
+
+$oledBlack: #000000;
+$oledDarkBorder: #1a1a1a;
+$oledSurface: #080808;
+
+// Cấu hình nền tổng thể app và player
+ytmusic-app {
+  --ytmusic-player-bar-background: #{$oledBlack} !important;
+  background-color: $oledBlack !important;
+}
+
+ytmusic-browse-response {
+  background-color: $oledBlack !important;
+}
+
+ytmusic-player-page.ytmusic-app {
+  background: $oledBlack !important;
+}
+
+.content.ytmusic-player-page {
+  padding: 0;
+  visibility: visible;
+  background: transparent;
+  @media screen and (max-width: 968px) {
+    #main-panel {
+      padding: 0 300px !important;
+      height: calc(6 / 16 * 100vw);
+    }
+  }
+}
+
+// Thanh phát nhạc (Player Bar) dưới đáy
+ytmusic-player-bar.ytmusic-app {
+  background: $oledBlack !important;
+  border-top: 1px solid $oledDarkBorder;
+}
+
+#player-bar-background.ytmusic-app-layout {
+  background-color: $oledBlack !important;
+}
+
+// Thanh tiến trình phát nhạc (Progress Bar)
+#progress-bar.ytmusic-player-bar {
+  --paper-slider-active-color: #ffffff;
+  --paper-slider-knob-color: #ffffff;
+  --paper-slider-secondary-color: #333333;
+  padding-right: 0 !important;
+  left: 0 !important;
+  right: -10px !important;
+  width: unset !important;
+  padding-left: 0 !important;
+  #sliderContainer {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+// Ảnh đại diện bài hát
+.image.ytmusic-player-bar {
+  border-radius: 8px;
+  border: 1px solid $oledDarkBorder;
+  transform: translate3d(0, 0, 1px);
+}
+
+// Danh sách phát (Queue)
+ytmusic-player-queue {
+  padding: 10px 0;
+  background: $oledBlack !important;
+}
+
+ytmusic-player-queue-item {
+  --ytmusic-player-queue-item-thumbnail-size: 42px !important;
+  --ytmusic-list-item-height: 58px;
+  background: $oledSurface;
+  border: 1px solid $oledDarkBorder;
+  border-radius: 8px;
+  transform: translate3d(0, 0, 1px);
+  opacity: 0.88;
+  margin-bottom: 8px;
+  transition: background-color 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+
+  &:hover:not([selected]) {
+    background-color: #121212 !important;
+    border-color: #2a2a2a;
+    opacity: 1;
+  }
+
+  &[selected] {
+    background-color: #1c1c1c !important;
+    border-color: #444444;
+    opacity: 1;
+  }
+}
+
+// Thanh điều hướng (Nav Bar)
+ytmusic-nav-bar {
+  background-color: $oledBlack !important;
+  border-bottom: 1px solid $oledDarkBorder;
+}
+
+.logo.ytmusic-nav-bar {
+  filter: grayscale(1) brightness(1.8);
+}
+
+// Dialog và Popup Menu
+tp-yt-paper-dialog,
+tp-yt-paper-listbox.ytmusic-menu-popup-renderer {
+  background-color: $oledBlack !important;
+  border: 1px solid $oledDarkBorder !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9) !important;
+  border-radius: 10px;
+}
+
+// Nút bấm và kích thước điều khiển
+$playerIconSize: 20px;
+$playerButtonSize: 42px;
+
+ytmusic-player-bar .play-pause-button.ytmusic-player-bar {
+  height: $playerButtonSize !important;
+  width: $playerButtonSize !important;
+
+  .yt-icon {
+    width: $playerIconSize !important;
+    height: $playerIconSize !important;
+    transform: none !important;
+    translate: none !important;
+  }
+}
+
+#right-controls,
+.middle-controls-buttons {
+  --yt-icon-button-icon-height: #{$playerIconSize - 4px};
+  --yt-icon-button-icon-width: #{$playerIconSize - 4px};
+
+  .ytIconWrapperHost {
+    padding: 2px;
+    height: var(--yt-icon-button-icon-height) !important;
+    width: var(--yt-icon-button-icon-width) !important;
+  }
+}
+
+button.yt-icon-button > yt-icon {
+  height: $playerIconSize - 4px !important;
+  width: $playerIconSize - 4px !important;
+
+  svg {
+    stroke-width: 1px !important;
+  }
+}

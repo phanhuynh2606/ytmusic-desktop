@@ -22,10 +22,11 @@ File này lưu trữ danh sách tính năng theo dõi tiến độ phát triển
 - [x] Lưu lựa chọn ngôn ngữ vào `settings store` để giữ nguyên khi khởi động lại app.
 
 ### 2. 🎨 Bộ Theme độc quyền (Preset Themes)
-- [ ] Tích hợp sẵn theme **OLED Pure Black** (nền đen sâu 100%, tăng tương phản, siêu tiết kiệm pin).
-- [ ] Tích hợp sẵn theme **Cyberpunk Neon** (tím hồng neon đồng bộ với nhận diện logo mới của app).
-- [ ] Tích hợp sẵn theme **Windows 11 Mica Glass** (hiệu ứng kính mờ acrylic trong suốt).
-- [ ] Thêm menu chọn nhanh các Theme có sẵn trong Settings mà không cần người dùng tự dán mã CSS.
+- [x] Tích hợp sẵn theme **OLED Pure Black** (nền đen sâu 100%, tăng tương phản, siêu tiết kiệm pin).
+- [x] Tích hợp sẵn theme **Cyberpunk Neon** (tím hồng neon đồng bộ với nhận diện logo mới của app).
+- [x] Tích hợp sẵn theme **Windows 11 Mica Glass** (hiệu ứng kính mờ acrylic trong suốt phong cách Fluent).
+- [x] Tích hợp sẵn theme **iOS Liquid Glass** (hiệu ứng kính lỏng Apple trong suốt phủ mờ specular highlight).
+- [x] Thêm bộ thẻ Card trực quan chọn nhanh các Theme có sẵn trong Settings mà không cần người dùng tự dán mã CSS.
 
 ### 3. ⏰ Hẹn giờ tắt nhạc (Sleep Timer)
 - [ ] Tạo module đếm ngược thời gian trong Main Process: hỗ trợ dừng phát nhạc (Pause) hoặc đóng app hoàn toàn.

@@ -1,7 +1,7 @@
 export interface ThemesConfig {
 	enabled: boolean;
 	/** Builtin theme id or "custom" */
-	selected: "default" | "custom";
+	selected: "default" | "oled" | "cyberpunk" | "mica" | "liquid-glass" | "custom" | (string & {});
 	customFile: string | null;
 	watching: boolean;
 	thumbnailBackground?: boolean;
