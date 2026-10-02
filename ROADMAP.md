@@ -44,10 +44,10 @@ File này lưu trữ danh sách tính năng theo dõi tiến độ phát triển
 - [x] Lưu và khôi phục cấu hình EQ cho từng thể loại nhạc.
 
 ### 5. 🪟 Cửa sổ Mini Player nổi ghim trên màn hình (Floating Always-on-Top)
-- [ ] Tạo cửa sổ widget nhỏ gọn có tính năng `Always on Top` (nằm trên mọi ứng dụng/game).
-- [ ] Hiển thị ảnh bìa động, thanh tiến độ bài hát, các nút điều khiển nhanh.
-- [ ] Tích hợp hiển thị lời bài hát (lyrics) thu nhỏ chạy chữ theo nhạc.
-- [ ] Cho phép kéo thả vị trí và chỉnh độ trong suốt (opacity).
+- [x] Tạo cửa sổ widget nhỏ gọn có tính năng `Always on Top` (nằm trên mọi ứng dụng/game).
+- [x] Hiển thị ảnh bìa động, thanh tiến độ bài hát, các nút điều khiển nhanh.
+- [x] Tích hợp hiển thị lời bài hát (lyrics) thu nhỏ chạy chữ theo nhạc.
+- [x] Cho phép kéo thả vị trí và chỉnh độ trong suốt (opacity).
 
 ### 6. 🛡️ Tự động xử lý quảng cáo (Ad Auto-Skip & Smart Mute)
 - [ ] Script ngầm tự động nhận diện và click nút "Bỏ qua quảng cáo" (Skip Ad) ngay khi xuất hiện.
@@ -57,7 +57,8 @@ File này lưu trữ danh sách tính năng theo dõi tiến độ phát triển
 
 ## 📦 Giai đoạn 3: Tối ưu & Đóng gói phát hành (Phase 3: Release)
 
-- [ ] Dọn dẹp các module và tài nguyên không dùng đến để giảm dung lượng file cài đặt `.exe`.
-- [ ] Chạy thử nghiệm quy trình build đóng gói Windows: `pnpm run release:pack:win`.
-- [ ] Kiểm tra tính tương thích của file cài đặt trên Windows 10 và Windows 11.
-- [ ] Cấu hình GitHub Actions (CI/CD) để tự động xuất file cài đặt mỗi khi tạo tag Release trên GitHub.
+- [x] Dọn dẹp các module và tài nguyên không dùng đến để giảm dung lượng file cài đặt `.exe`.
+- [x] Chạy thử nghiệm quy trình build đóng gói Windows: `pnpm run release:pack:win` / `pnpm release:compile`.
+- [x] Kiểm tra tính tương thích của file cài đặt trên Windows 10 và Windows 11.
+- [x] Cấu hình GitHub Actions (CI/CD) để tự động xuất file cài đặt mỗi khi tạo tag Release trên GitHub.
+

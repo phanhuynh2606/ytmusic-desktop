@@ -7,6 +7,7 @@ import { authRouter } from "@main/trpc/routers/auth";
 import { chromecastRouter } from "@main/trpc/routers/chromecast";
 import { discordRouter } from "@main/trpc/routers/discord";
 import { lastfmRouter } from "@main/trpc/routers/lastfm";
+import { miniPlayerRouter } from "@main/trpc/routers/miniPlayer";
 import { navigationRouter } from "@main/trpc/routers/navigation";
 import { settingsRouter } from "@main/trpc/routers/settings";
 import { sleepTimerRouter } from "@main/trpc/routers/sleepTimer";
@@ -39,6 +40,7 @@ export const appRouter = router({
 	window: windowRouter,
 	discord: discordRouter,
 	sleepTimer: sleepTimerRouter,
+	miniPlayer: miniPlayerRouter,
 });
 
 export type AppRouter = typeof appRouter;

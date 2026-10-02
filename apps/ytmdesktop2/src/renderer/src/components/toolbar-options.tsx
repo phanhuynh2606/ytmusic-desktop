@@ -1,4 +1,4 @@
-import { AlertCircleIcon, CheckIcon, DownloadIcon, TimerIcon } from "lucide-react";
+import { AlertCircleIcon, CheckIcon, DownloadIcon, PictureInPicture2, TimerIcon } from "lucide-react";
 import DevIcon from "@/assets/icons/chip.svg?react";
 import RPCIcon from "@/assets/icons/discord-rpc.svg?react";
 import HomeIcon from "@/assets/icons/home.svg?react";
@@ -31,8 +31,25 @@ export function ToolbarOptions() {
 		onSuccess: () => void refetchSleep(),
 	});
 
+	const { data: miniPlayerState, refetch: refetchMiniPlayer } = trpc.miniPlayer.state.useQuery();
+	const { mutateAsync: toggleMiniPlayer } = trpc.miniPlayer.toggle.useMutation({
+		onSuccess: () => void refetchMiniPlayer(),
+	});
+
 	return (
 		<div className="flex flex-row items-center gap-2">
+			{/* Nút Mini Player nổi */}
+			<button
+				type="button"
+				onClick={() => void toggleMiniPlayer()}
+				className={`control-button h-4 flex items-center justify-center cursor-pointer ${
+					miniPlayerState?.isVisible ? "text-red-400 bg-red-500/15 rounded" : ""
+				}`}
+				title="Bật/Tắt Cửa sổ Mini Player nổi (Always-on-top)"
+			>
+				<PictureInPicture2 className="size-3.5" />
+			</button>
+
 			{/* Nút Hẹn giờ tắt nhạc (Sleep Timer) */}
 			<Popover>
 				<PopoverTrigger

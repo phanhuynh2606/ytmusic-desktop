@@ -33,6 +33,7 @@ export class BaseProvider<TView extends WebContentsView = WebContentsView> {
 		toolbarView: TView;
 		settingsWindow?: BrowserWindow;
 		trayViewWindow?: BrowserWindow;
+		miniPlayerWindow?: BrowserWindow;
 	}>;
 	get logger() {
 		return this._loggerInstance;

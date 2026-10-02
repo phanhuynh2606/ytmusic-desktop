@@ -198,6 +198,16 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			type: "separator",
 		},
 		{
+			label: "🪟 Cửa sổ Mini Player nổi",
+			click: () => {
+				const miniPlayer = (provider.getProvider as any)("miniPlayer");
+				void miniPlayer?.toggle();
+			},
+		},
+		{
+			type: "separator",
+		},
+		{
 			label: t.tray.quit,
 			click: () => serverMain.emit("app.quit", null, true),
 		},
