@@ -10,7 +10,7 @@ import { App, BrowserWindow, screen } from "electron";
 import { debounce } from "lodash-es";
 
 const TRAY_VIEW_WIDTH = 420;
-const TRAY_VIEW_HEIGHT = 168;
+const TRAY_VIEW_HEIGHT = 180;
 
 function clampToVisibleWorkArea(x: number, y: number): { x: number; y: number } {
 	const b = screen.getDisplayNearestPoint({ x, y }).workArea;

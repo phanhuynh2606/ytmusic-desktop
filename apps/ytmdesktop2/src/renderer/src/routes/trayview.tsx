@@ -28,6 +28,38 @@ export const Route = createFileRoute("/trayview")({
 	component: TrayViewPage,
 });
 
+interface LrcLine {
+	timeMs: number;
+	text: string;
+}
+
+function parseLrc(lrcText: string): LrcLine[] {
+	const lines = lrcText.split("\n");
+	const result: LrcLine[] = [];
+	const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+
+	for (const rawLine of lines) {
+		const line = rawLine.trim();
+		if (!line) continue;
+		const matches = [...line.matchAll(timeReg)];
+		if (!matches.length) continue;
+		const text = line.replace(timeReg, "").trim();
+		if (!text) continue;
+
+		for (const match of matches) {
+			const min = Number.parseInt(match[1], 10);
+			const sec = Number.parseInt(match[2], 10);
+			const msPart = match[3];
+			const ms = msPart.length === 2 ? Number.parseInt(msPart, 10) * 10 : Number.parseInt(msPart, 10);
+			const timeMs = min * 60 * 1000 + sec * 1000 + ms;
+			result.push({ timeMs, text });
+		}
+	}
+
+	result.sort((a, b) => a.timeMs - b.timeMs);
+	return result;
+}
+
 interface PlayState {
 	playing: boolean;
 	progress: number;
@@ -397,6 +429,86 @@ function TrayViewPage() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
 	}, [thumbnail]);
 
+	const [lrcLines, setLrcLines] = useState<LrcLine[]>([]);
+	const [lyricsLoading, setLyricsLoading] = useState(false);
+	const lastFetchedIdRef = useRef<string | null>(null);
+
+	const videoId = track?.video?.videoId;
+	const duration = playState?.duration || Number(track?.meta?.duration) || 0;
+	const progress = playState?.progress ?? 0;
+
+	// Fetch lyrics when track changes
+	useEffect(() => {
+		if (!track?.video?.title) {
+			setLrcLines([]);
+			return;
+		}
+		if (lastFetchedIdRef.current === videoId && lrcLines.length > 0) {
+			return;
+		}
+		lastFetchedIdRef.current = videoId ?? null;
+
+		let cancelled = false;
+		setLyricsLoading(true);
+
+		const searchParams = new URLSearchParams({
+			track_name: track.video.title,
+			artist_name: track.video.author || "",
+		});
+		if (duration > 0) {
+			searchParams.set("duration", String(Math.round(duration)));
+		}
+
+		fetch(`https://lrclib.net/api/get?${searchParams.toString()}`)
+			.then(async (res) => {
+				if (!res.ok) {
+					const fallbackRes = await fetch(
+						`https://lrclib.net/api/search?q=${encodeURIComponent(`${track.video.title} ${track.video.author || ""}`)}`,
+					);
+					if (!fallbackRes.ok) return null;
+					const hits = await fallbackRes.json();
+					return Array.isArray(hits) && hits.length > 0 ? hits[0] : null;
+				}
+				return res.json();
+			})
+			.then((data) => {
+				if (cancelled) return;
+				if (data?.syncedLyrics) {
+					setLrcLines(parseLrc(data.syncedLyrics));
+				} else if (data?.plainLyrics) {
+					const lines = (data.plainLyrics as string).split("\n").filter(Boolean);
+					setLrcLines(lines.map((text, idx) => ({ timeMs: idx * 4000, text })));
+				} else {
+					setLrcLines([]);
+				}
+			})
+			.catch(() => {
+				if (!cancelled) setLrcLines([]);
+			})
+			.finally(() => {
+				if (!cancelled) setLyricsLoading(false);
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [videoId, track?.video?.title, track?.video?.author, duration]);
+
+	// Current lyric line
+	const currentLine = useMemo(() => {
+		if (!lrcLines.length) return null;
+		const curMs = progress * 1000;
+		let line = lrcLines[0];
+		for (let i = 0; i < lrcLines.length; i++) {
+			if (lrcLines[i].timeMs <= curMs + 200) {
+				line = lrcLines[i];
+			} else {
+				break;
+			}
+		}
+		return line?.text || null;
+	}, [lrcLines, progress]);
+
 	const time = useMemo((): { current: string; end: string; pct: number } | null => {
 		const progress = playState?.progress;
 		const duration = playState?.duration || Number(track?.meta?.duration) || 0;
@@ -623,6 +735,17 @@ function TrayViewPage() {
 							<div className="min-w-0 flex-1 pt-0.5">
 								<p className="truncate text-base leading-tight font-semibold">{title}</p>
 								{artist ? <p className="mt-0.5 truncate text-sm text-muted-foreground">{artist}</p> : null}
+								{currentLine ? (
+									<p className="mt-1 truncate text-xs font-semibold text-emerald-400 flex items-center gap-1.5 drop-shadow-sm">
+										<span className="shrink-0 text-[11px]">♪</span>
+										<span className="truncate">{currentLine}</span>
+									</p>
+								) : lyricsLoading ? (
+									<p className="mt-1 truncate text-[11px] text-muted-foreground/60 italic flex items-center gap-1">
+										<span className="shrink-0 text-[10px]">♪</span>
+										<span>Đang tìm lời bài hát…</span>
+									</p>
+								) : null}
 							</div>
 						</div>
 
