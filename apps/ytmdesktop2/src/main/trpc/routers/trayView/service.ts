@@ -9,7 +9,7 @@ import { createAppWindow, wrapWindowHandler } from "@main/windows/windowUtils";
 import { App, BrowserWindow, screen } from "electron";
 import { debounce } from "lodash-es";
 
-const TRAY_VIEW_WIDTH = 380;
+const TRAY_VIEW_WIDTH = 420;
 const TRAY_VIEW_HEIGHT = 168;
 
 function clampToVisibleWorkArea(x: number, y: number): { x: number; y: number } {

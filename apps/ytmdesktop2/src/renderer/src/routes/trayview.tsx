@@ -6,13 +6,20 @@ import { clamp } from "lodash-es";
 import { ArrowLeftIcon, GripVerticalIcon, PinIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ButtonHTMLAttributes, type MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import ApiIcon from "@/assets/icons/chip.svg?react";
+import DiscordIcon from "@/assets/icons/discord-rpc.svg?react";
+import LastFMIcon from "@/assets/icons/lastfm.svg?react";
 import LikeIcon from "@/assets/icons/like.svg?react";
 import NextIcon from "@/assets/icons/next.svg?react";
 import PauseIcon from "@/assets/icons/pause.svg?react";
 import PlayIcon from "@/assets/icons/play.svg?react";
 import PrevIcon from "@/assets/icons/prev.svg?react";
 import SettingsIcon from "@/assets/icons/settings.svg?react";
+import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDiscord } from "@/hooks/use-discord";
+import { useLastFm } from "@/hooks/use-lastfm";
+import { useSettingsState } from "@/hooks/use-settings";
 import { useTrack, useTrackState } from "@/hooks/use-track";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
@@ -252,6 +259,17 @@ const playerButtonVariants = cva(
 	},
 );
 
+const controlToggleVariants = cva(
+	[
+		"relative inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-[transform,background-color,color,opacity] duration-100",
+		"enabled:hover:bg-accent/15 enabled:hover:text-foreground enabled:active:scale-95",
+		"disabled:pointer-events-none disabled:opacity-40",
+		"[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+		"data-[on=true]:bg-accent/20 data-[on=true]:text-foreground",
+	].join(" "),
+	{ variants: { variant: { default: "" } }, defaultVariants: { variant: "default" } },
+);
+
 function ChromeButton({ className, type = "button", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
 	return <button type={type} className={cn(chromeButtonVariants(), className)} {...props} />;
 }
@@ -268,7 +286,27 @@ function PlayerButton({
 	);
 }
 
-
+function ControlToggle({
+	className,
+	active,
+	busy,
+	type = "button",
+	children,
+	...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean; busy?: boolean }) {
+	return (
+		<button type={type} data-on={active ? "true" : undefined} className={cn(controlToggleVariants(), className)} {...props}>
+			{children}
+			{busy ? (
+				<span className="absolute -top-0.5 -right-0.5 flex size-3 items-center justify-center rounded-full bg-muted">
+					<Spinner className="size-2" />
+				</span>
+			) : active ? (
+				<span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-green-500 ring-2 ring-background" />
+			) : null}
+		</button>
+	);
+}
 
 function pointerInsideWindow(ev: { clientX: number; clientY: number }): boolean {
 	return ev.clientX >= 0 && ev.clientY >= 0 && ev.clientX < window.innerWidth && ev.clientY < window.innerHeight;
@@ -282,6 +320,9 @@ function TrayViewPage() {
 	const playStateRef = useRef(playState);
 	playStateRef.current = playState;
 
+	const { enabled: lastFmEnabled, toggleLastFM, lastFM, lastFMLoading, isBusy: lastFmBusy } = useLastFm();
+	const { enabled: discordEnabled, toggle: toggleDiscord, loading: discordLoading, connected: discordConnected, error: discordError } = useDiscord();
+	const [apiEnabled, setApiEnabled] = useSettingsState<boolean>("api.enabled", false);
 	const { data: pinned = false } = trpc.trayView.pinned.useQuery();
 	const [contentHovered, setContentHovered] = useState(false);
 	const [leftThirdHovered, setLeftThirdHovered] = useState(false);
@@ -295,6 +336,7 @@ function TrayViewPage() {
 	const { mutateAsync: play } = trpc.track.play.useMutation();
 	const { mutateAsync: seek } = trpc.track.seek.useMutation();
 	const { mutateAsync: like } = trpc.track.like.useMutation();
+	const { mutateAsync: dislike } = trpc.track.dislike.useMutation();
 	const { mutateAsync: hideTrayView } = trpc.trayView.hide.useMutation();
 	const { mutateAsync: openMain } = trpc.trayView.openMain.useMutation();
 	const { mutateAsync: toggleTrayPin } = trpc.trayView.togglePinned.useMutation();
@@ -330,6 +372,7 @@ function TrayViewPage() {
 	const title = track?.video?.title ?? "Nothing playing";
 	const artist = track?.video?.author ?? "";
 	const hasLike = typeof playState?.liked === "boolean";
+	const hasDislike = typeof playState?.disliked === "boolean";
 	const liveAccent = trackAccent || playState?.accent || null;
 	const { src: artSrc, accent: displayAccent } = useAlignedArtDisplay(thumbnail, liveAccent);
 
@@ -397,6 +440,19 @@ function TrayViewPage() {
 			.finally(() => setTrackBusy(false));
 	}
 
+	function dislikeToggle() {
+		if (typeof playStateRef.current?.disliked !== "boolean") return;
+		const next = !playStateRef.current.disliked;
+		patchPlayState(utils, { disliked: next, ...(next ? { liked: false } : {}) });
+		setTrackBusy(true);
+		return dislike({ disliked: next })
+			.then((disliked) => {
+				if (typeof disliked === "boolean") {
+					patchPlayState(utils, { disliked, ...(disliked ? { liked: false } : {}) });
+				}
+			})
+			.finally(() => setTrackBusy(false));
+	}
 
 	async function handleSettings() {
 		await hideTrayView();
@@ -537,27 +593,27 @@ function TrayViewPage() {
 										</ChromeButton>
 									}
 								/>
-								<TooltipContent side="bottom">{pinned ? "Bỏ ghim (Unpin)" : "Ghim lên màn hình (Pin)"}</TooltipContent>
+								<TooltipContent side="bottom">{pinned ? "Unpin" : "Pin"}</TooltipContent>
 							</Tooltip>
 							<Tooltip onOpenChange={setChromeTooltipOpen}>
 								<TooltipTrigger
 									render={
-										<ChromeButton aria-label="Mở lại ứng dụng" onClick={() => void openMain()}>
+										<ChromeButton aria-label="Back to app" onClick={() => void openMain()}>
 											<ArrowLeftIcon />
 										</ChromeButton>
 									}
 								/>
-								<TooltipContent side="bottom">Mở lại ứng dụng</TooltipContent>
+								<TooltipContent side="bottom">Back to app</TooltipContent>
 							</Tooltip>
 							<Tooltip onOpenChange={setChromeTooltipOpen}>
 								<TooltipTrigger
 									render={
-										<ChromeButton aria-label="Cài đặt" onClick={() => void handleSettings()}>
+										<ChromeButton aria-label="Settings" onClick={() => void handleSettings()}>
 											<SettingsIcon />
 										</ChromeButton>
 									}
 								/>
-								<TooltipContent side="bottom">Cài đặt</TooltipContent>
+								<TooltipContent side="bottom">Settings</TooltipContent>
 							</Tooltip>
 						</div>
 
@@ -668,8 +724,88 @@ function TrayViewPage() {
 								<PlayerButton disabled={trackBusy || !track} aria-label="Next" onClick={handleNext}>
 									<NextIcon />
 								</PlayerButton>
+								{hasDislike ? (
+									<PlayerButton
+										active={!!playState?.disliked}
+										disabled={trackBusy || !track}
+										aria-label="Dislike"
+										style={
+											playState?.disliked && displayAccent
+												? { color: displayAccent }
+												: undefined
+										}
+										onClick={dislikeToggle}
+									>
+										<LikeIcon className="rotate-180" />
+									</PlayerButton>
+								) : null}
 							</div>
 						</div>
+					</div>
+
+					{/* Control center column */}
+					<div className="relative z-10 flex w-12 shrink-0 flex-col items-center justify-center gap-1.5 border-l border-border/60 bg-background/40 px-1.5 py-2 backdrop-blur-sm">
+						<Tooltip>
+							<TooltipTrigger
+								render={
+									<ControlToggle
+										active={lastFmEnabled}
+										busy={lastFmBusy || lastFMLoading}
+										aria-label={lastFmEnabled ? "Disable Last.fm" : "Enable Last.fm"}
+										onClick={() => void toggleLastFM(!lastFmEnabled)}
+									>
+										<LastFMIcon
+											className={cn(
+												lastFmEnabled && lastFM.error && "text-red-500",
+												lastFmEnabled && lastFM.connected && !lastFM.error && "text-green-500",
+											)}
+										/>
+									</ControlToggle>
+								}
+							/>
+							<TooltipContent side="left">
+								{lastFmEnabled ? (lastFM.name ? `Last.fm · ${lastFM.name}` : "Last.fm on") : "Last.fm off"}
+							</TooltipContent>
+						</Tooltip>
+
+						<Tooltip>
+							<TooltipTrigger
+								render={
+									<ControlToggle
+										active={discordEnabled}
+										busy={discordLoading}
+										aria-label={discordEnabled ? "Disable Discord" : "Enable Discord"}
+										onClick={toggleDiscord}
+									>
+										<DiscordIcon className={cn(discordEnabled && discordError && "text-red-500")} />
+									</ControlToggle>
+								}
+							/>
+							<TooltipContent side="left">
+								{discordError && discordEnabled
+									? `Discord · ${discordError}`
+									: discordEnabled
+										? discordConnected
+											? "Discord on"
+											: "Discord connecting…"
+										: "Discord off"}
+							</TooltipContent>
+						</Tooltip>
+
+						<Tooltip>
+							<TooltipTrigger
+								render={
+									<ControlToggle
+										active={apiEnabled}
+										aria-label={apiEnabled ? "Disable Local API" : "Enable Local API"}
+										onClick={() => setApiEnabled((prev) => !prev)}
+									>
+										<ApiIcon />
+									</ControlToggle>
+								}
+							/>
+							<TooltipContent side="left">{apiEnabled ? "Local API on" : "Local API off"}</TooltipContent>
+						</Tooltip>
 					</div>
 				</div>
 			</div>
