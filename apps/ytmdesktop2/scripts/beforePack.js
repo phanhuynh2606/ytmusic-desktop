@@ -42,7 +42,7 @@ exports.default = async function beforePack(context) {
 <!-- Copyright ${date.slice(0, 4)} Venipa -->
 <component type="desktop-application">
   <id>${APP_ID}</id>
-  <name>YouTube Music for Desktop</name>
+  <name>Music Desktop App</name>
   <summary>Unofficial YouTube Music desktop client</summary>
   <developer id="net.venipa">
     <name translate="no">Venipa</name>

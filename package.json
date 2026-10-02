@@ -4,7 +4,7 @@
 	"private": true,
 	"author": "Venipa <admin@venipa.net>",
 	"homepage": "https://youtube-music.app",
-  "description": "Unofficial YouTube Music Desktop App for Windows, Mac and Linux | Monorepo",
+  "description": "Music Desktop App for Windows, Mac and Linux | Monorepo",
 	"scripts": {
 		"format": "pnpm --filter ytmdesktop2 format",
 		"lint": "pnpm --filter ytmdesktop2 lint",

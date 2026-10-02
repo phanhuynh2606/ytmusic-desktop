@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/electron-userland/electron-builder/refs/heads/master/packages/app-builder-lib/scheme.json
 
 appId: net.venipa.ytmdesktop
-productName: YouTube Music for Desktop
+productName: Music Desktop App
 extraMetadata:
-  name: YouTube Music for Desktop
+  name: Music Desktop App
 directories:
   buildResources: build
 files:
@@ -26,7 +26,7 @@ asarUnpack:
   - "**/*.icns"
   - "**/assets/**"
 protocols:
-  - name: YouTube Music for Desktop
+  - name: Music Desktop App
     schemes:
       - ytmd
 win:

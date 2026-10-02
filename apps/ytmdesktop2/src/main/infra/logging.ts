@@ -141,7 +141,7 @@ function showFatalErrorDialog(kind: string, reason: unknown): void {
 	if (fatalErrorDialogShown) return;
 	fatalErrorDialogShown = true;
 	try {
-		dialog.showErrorBox(`YouTube Music for Desktop: ${kind}`, formatFatalReason(reason).slice(0, 4000));
+		dialog.showErrorBox(`Music Desktop App: ${kind}`, formatFatalReason(reason).slice(0, 4000));
 	} catch {
 		/* dialog can fail if Electron is tearing down */
 	}
