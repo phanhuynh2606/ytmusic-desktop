@@ -21,7 +21,6 @@ export default class StartupProvider extends BaseProvider implements AfterInit, 
 		super("startup");
 		if (platform.isWindows) {
 			app.commandLine.appendSwitch("enable-gpu-rasterization"); // performance feature flags
-			app.commandLine.appendSwitch("enable-zero-copy");
 			app.commandLine.appendSwitch("force_high_performance_gpu"); // fixes choppy/lowfps video and transitions, defaults to primary gpu if no more powerful gpu is found
 		}
 		// Keep renderers (esp. YouTube WebContentsView) off Chromium background/EcoQoS throttling

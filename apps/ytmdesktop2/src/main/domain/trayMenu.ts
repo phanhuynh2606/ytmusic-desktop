@@ -131,12 +131,12 @@ export const createTrayMenu = (provider: BaseProvider) => {
 		},
 		{
 			type: "submenu",
-			label: "⏰ Hẹn giờ tắt nhạc (Sleep Timer)",
+			label: "Hẹn giờ tắt nhạc (Sleep Timer)",
 			submenu: [
 				...(st?.active
 					? [
 							{
-								label: `⏳ Đang đếm: ${
+								label: `Đang đếm: ${
 									st.trackEnd
 										? "Hết bài hiện tại"
 										: `${Math.floor((st.remainingSeconds ?? 0) / 60)}:${((st.remainingSeconds ?? 0) % 60).toString().padStart(2, "0")}`
@@ -144,7 +144,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 								enabled: false,
 							},
 							{
-								label: "❌ Hủy hẹn giờ",
+								label: "Hủy hẹn giờ",
 								click: () => {
 									sleepTimer?.cancelTimer();
 								},
@@ -198,7 +198,7 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			type: "separator",
 		},
 		{
-			label: "🪟 Cửa sổ Mini Player nổi",
+			label: "Cửa sổ Mini Player",
 			click: () => {
 				const miniPlayer = (provider.getProvider as any)("miniPlayer");
 				void miniPlayer?.toggle();

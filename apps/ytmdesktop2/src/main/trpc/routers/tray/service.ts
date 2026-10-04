@@ -31,13 +31,6 @@ export default class TrayProvider extends BaseProvider implements AfterInit, OnD
 				() => this.onSettingsChange(),
 				{ debounce: 50 },
 			);
-			serverMain.on("sleepTimer.state", () => {
-				if (this._tray && !this._tray.isDestroyed()) {
-					try {
-						this.buildMenu();
-					} catch {}
-				}
-			});
 		}
 		await this.initializeTray();
 	}
@@ -86,7 +79,7 @@ export default class TrayProvider extends BaseProvider implements AfterInit, OnD
 			});
 			this._tray.on("right-click", (_ev, bounds) => {
 				try {
-					const menu = this._menu ?? this.buildMenu();
+					const menu = this.buildMenu();
 					this._tray.popUpContextMenu(menu, bounds);
 				} catch (err) {
 					this.logger.error("Failed to pop tray menu", err);

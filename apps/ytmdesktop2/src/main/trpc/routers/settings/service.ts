@@ -94,6 +94,10 @@ const defaultSettings = {
 	lastfm: {
 		enabled: false,
 	} as LastFMSettings,
+	adblock: {
+		enabled: true,
+		blockedTotal: 0,
+	},
 };
 
 export type SettingsStore = typeof defaultSettings & {

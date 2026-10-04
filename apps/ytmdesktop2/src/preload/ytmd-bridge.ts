@@ -9,6 +9,7 @@ const EMIT_ALLOWLIST = new Set<string>([
 	"track:play-state-progress",
 	"track:title-change",
 	"app.loadEnd",
+	"adblock:dom-blocked",
 ]);
 
 /** Channels page-world `ytmd.on` may subscribe to. */

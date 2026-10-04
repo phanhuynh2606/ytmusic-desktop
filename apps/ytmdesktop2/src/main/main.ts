@@ -126,9 +126,10 @@ const runApp = async function () {
 
 		attachQuitHandler(mainWindow, serviceCollection);
 		attachTrayState(mainWindow);
-		if (startupService.isStartupContext ? !startupService.isEnabled || !startupService.isInitialMinimized : !startupService.isMinimizedArg) {
-			mainWindow.main.show();
-		}
+		mainWindow.main.show();
+		mainWindow.main.focus();
+		mainWindow.main.setAlwaysOnTop(true);
+		mainWindow.main.setAlwaysOnTop(false);
 		let afterInitChain = Promise.resolve();
 		const runAfterInit = () => {
 			afterInitChain = afterInitChain.then(async () => {

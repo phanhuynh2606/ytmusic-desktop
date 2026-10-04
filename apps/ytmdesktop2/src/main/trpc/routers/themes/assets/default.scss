@@ -1,6 +1,6 @@
 #progress-bar.ytmusic-player-bar {
-  --paper-slider-active-color: #fff;
-  --paper-slider-knob-color: #fff;
+  --paper-slider-active-color: var(--ytmd-thumbnail-accent, #fff);
+  --paper-slider-knob-color: var(--ytmd-thumbnail-accent, #fff);
   padding-right: 0 !important;
   left: 0 !important;
   right: -10px !important;

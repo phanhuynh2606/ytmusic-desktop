@@ -24,11 +24,21 @@ export function attachTrayState<T extends BrowserWindowViews<any, any>>(mainWind
 
 export function setTrayState(state: "visible" | "hidden") {
 	if (!mainWindowRef) return;
+	const setThrottling = (throttled: boolean) => {
+		try {
+			mainWindowRef?.main.webContents?.setBackgroundThrottling(throttled);
+			mainWindowRef?.views?.toolbarView?.webContents?.setBackgroundThrottling(throttled);
+			mainWindowRef?.views?.youtubeView?.webContents?.setBackgroundThrottling(throttled);
+		} catch {}
+	};
+
 	if (state === "visible") {
 		if (!mainWindowRef.main.isVisible()) mainWindowRef.main.show();
 		mainWindowRef.main.setSkipTaskbar(false);
+		setThrottling(false);
 	} else if (state === "hidden") {
 		if (mainWindowRef.main.isVisible()) mainWindowRef.main.hide();
 		mainWindowRef.main.setSkipTaskbar(true);
+		setThrottling(true);
 	}
 }

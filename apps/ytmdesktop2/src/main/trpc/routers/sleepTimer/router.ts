@@ -6,7 +6,7 @@ import type SleepTimerProvider from "./service";
 import type { SleepTimerState } from "./service";
 
 const setTimerInput = z.object({
-	durationMinutes: z.number().positive().optional(),
+	durationMinutes: z.number().positive().max(720).optional(),
 	trackEnd: z.boolean().optional(),
 	mode: z.enum(["pause", "quit"]).optional(),
 });
@@ -19,6 +19,10 @@ export const sleepTimerRouter = router({
 	set: publicProcedure.input(setTimerInput).mutation(({ ctx, input }) => {
 		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
 		return sleepTimer.setTimer(input);
+	}),
+	setMode: publicProcedure.input(z.enum(["pause", "quit"])).mutation(({ ctx, input }) => {
+		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;
+		return sleepTimer.setMode(input);
 	}),
 	cancel: publicProcedure.mutation(({ ctx }) => {
 		const sleepTimer = provider(ctx, "sleepTimer" as any) as SleepTimerProvider;

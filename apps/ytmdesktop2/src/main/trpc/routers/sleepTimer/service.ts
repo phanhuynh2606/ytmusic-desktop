@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 import { AfterInit, BaseProvider, OnDestroy } from "@main/core/baseProvider";
 import { serverMain } from "@main/ipc/serverEvents";
+import { getAppWindows } from "@main/lifecycle";
 import { trackService } from "@main/trpc/routers/track";
 import { createAppWindow } from "@main/windows/windowUtils";
 import type { App, BrowserWindow } from "electron";
@@ -42,14 +43,17 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 			return;
 		}
 
+		const mainWindow = getAppWindows()?.main ?? null;
+
 		this.dialogWindow = await createAppWindow({
 			path: "/sleeptimer",
+			parent: mainWindow ?? undefined,
 			width: 350,
-			height: 440,
+			height: 470,
 			minWidth: 350,
-			minHeight: 440,
+			minHeight: 470,
 			maxWidth: 350,
-			maxHeight: 440,
+			maxHeight: 470,
 			show: true,
 			showTaskBar: false,
 			minimizeable: false,
@@ -76,10 +80,17 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 
 	async OnDestroy() {
 		this.cancelTimer();
+		this.closeDialog();
 	}
 
 	getState(): SleepTimerState {
 		return { ...this.state };
+	}
+
+	setMode(mode: "pause" | "quit"): SleepTimerState {
+		this.state.mode = mode;
+		this.broadcastState();
+		return this.getState();
 	}
 
 	onStateChange(listener: (state: SleepTimerState) => void): () => void {
@@ -92,7 +103,6 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 	private broadcastState(): void {
 		const currentState = this.getState();
 		this.emitter.emit("change", currentState);
-		// Phát sự kiện IPC để khay hệ thống (tray menu) hoặc renderer có thể bắt realtime
 		serverMain.emit("sleepTimer.state", null, currentState);
 	}
 
@@ -102,25 +112,66 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 		const mode = options.mode ?? "pause";
 
 		if (options.trackEnd) {
-			const targetTrackId = trackService.trackState?.id ?? null;
+			const currentTrack = trackService.trackState;
+			const initialTrackId = currentTrack?.id || null;
+			let initialRemaining = 0;
+			if (currentTrack && currentTrack.duration > 0) {
+				initialRemaining = Math.max(0, Math.round(currentTrack.duration - currentTrack.progress));
+			}
 
 			this.state = {
 				active: true,
 				mode,
 				targetDurationMinutes: null,
 				endAtTimestamp: null,
-				remainingSeconds: 0,
+				remainingSeconds: initialRemaining,
 				trackEnd: true,
-				targetTrackId,
+				targetTrackId: initialTrackId,
 			};
 
-			// Lắng nghe khi bài hát hiện tại đổi bài hoặc kết thúc
 			const onTrackChange = (trackState: any) => {
 				if (!this.state.active || !this.state.trackEnd) return;
 
-				// Nếu bài hát chuyển sang bài khác hoặc dừng kết thúc
-				if (targetTrackId && trackState.id !== targetTrackId) {
-					this.logger.debug("Sleep timer triggered: track finished/changed");
+				// Nếu ban đầu chưa có bài nào phát, gán bài đầu tiên xuất hiện
+				if (!this.state.targetTrackId) {
+					if (trackState?.id && trackState.playing) {
+						this.state.targetTrackId = trackState.id;
+						const rem = trackState.duration > 0 ? Math.max(0, Math.round(trackState.duration - trackState.progress)) : 0;
+						this.state.remainingSeconds = rem;
+						this.broadcastState();
+					}
+					return;
+				}
+
+				// Cùng bài hát: cập nhật thời gian còn lại
+				if (trackState?.id === this.state.targetTrackId) {
+					if (trackState.duration > 0) {
+						const rem = Math.max(0, Math.round(trackState.duration - trackState.progress));
+						if (rem !== this.state.remainingSeconds) {
+							this.state.remainingSeconds = rem;
+							this.broadcastState();
+						}
+
+						// Nếu bài hát đã chạy tới cuối thời lượng (còn <= 1s)
+						if (trackState.duration > 2 && trackState.progress >= trackState.duration - 1) {
+							this.logger.debug("Sleep timer triggered: track reached end");
+							void this.triggerAction();
+							return;
+						}
+					}
+
+					// Trường hợp bài đã ngừng phát ở gần cuối bài (kết thúc danh sách / tắt autoplay)
+					if (!trackState.playing && trackState.duration > 2 && trackState.duration - trackState.progress <= 2) {
+						this.logger.debug("Sleep timer triggered: track stopped near end");
+						void this.triggerAction();
+						return;
+					}
+					return;
+				}
+
+				// Nếu bài hát đã chuyển sang bài khác
+				if (trackState?.id && trackState.id !== this.state.targetTrackId) {
+					this.logger.debug("Sleep timer triggered: track changed to new track");
 					void this.triggerAction();
 				}
 			};
@@ -188,11 +239,16 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 		this.cancelTimer();
 
 		if (targetMode === "quit") {
-			this.logger.info("Sleep timer executed: quitting application");
-			this.electronApp.quit();
+			this.logger.info("Sleep timer executed: force quitting application");
+			// Gửi forceQuit = true để vượt qua bộ chặn minimize-to-tray
+			serverMain.emit("app.quit", null, true);
 		} else {
 			this.logger.info("Sleep timer executed: pausing track playback");
-			await trackService.pauseTrack();
+			try {
+				await trackService.pauseTrack();
+			} catch (err) {
+				this.logger.error("Failed to pause track on sleep timer", err);
+			}
 		}
 	}
 }

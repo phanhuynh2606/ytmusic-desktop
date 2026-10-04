@@ -6,7 +6,7 @@ import { ToolbarOptions } from "@/components/toolbar-options";
 import { Spinner } from "@/components/ui/spinner";
 import { useNavigation } from "@/hooks/use-navigation";
 import { useMainWindowState } from "@/hooks/use-settings";
-import { useTrack } from "@/hooks/use-track";
+import { useTrack, useTrackState } from "@/hooks/use-track";
 import { useTranslation } from "@/hooks/use-translation";
 import { useUpdater } from "@/hooks/use-updater";
 import { useWindowControls } from "@/hooks/use-window-controls";
@@ -21,6 +21,8 @@ function YoutubeToolbarPage() {
 	const isDarwin = useMemo(() => window.app.platform === "darwin", []);
 	const [state] = useMainWindowState();
 	const track = useTrack();
+	const trackState = useTrackState();
+	const accent = trackState?.accent;
 	const { updateInfo, downloaded, progress, isPending: updatePending, status, runUpdate } = useUpdater();
 	const { minimize, maximize, quit } = useWindowControls();
 	const { goback } = useNavigation();
@@ -33,7 +35,13 @@ function YoutubeToolbarPage() {
 
 	return (
 		<div className="h-full overflow-hidden">
-			<div className={`flex h-10 items-stretch justify-between gap-2 border-b border-neutral-800 bg-black px-2 select-none ${isDarwin ? "pl-20" : ""}`}>
+			<div
+				className={`flex h-10 items-stretch justify-between gap-2 border-b px-2 select-none transition-colors duration-500 ${isDarwin ? "pl-20" : ""}`}
+				style={{
+					backgroundColor: accent ? `${accent}1f` : "#0a0a0c",
+					borderBottomColor: accent ? `${accent}40` : "rgba(38,38,38,0.8)",
+				}}
+			>
 				<button
 					type="button"
 					className={cn("control-button self-center cursor-pointer", !canGoBack && "disabled")}
@@ -51,7 +59,14 @@ function YoutubeToolbarPage() {
 						</div>
 					)}
 					{title && (
-						<div className="flex h-7 items-center truncate rounded bg-blue-500/50 px-3 text-xs">
+						<div
+							className="flex h-7 items-center truncate rounded px-3 text-xs transition-colors duration-500 border"
+							style={{
+								backgroundColor: accent ? `${accent}35` : "rgba(59, 130, 246, 0.4)",
+								borderColor: accent ? `${accent}60` : "transparent",
+								color: "#ffffff",
+							}}
+						>
 							<span className="truncate text-ellipsis">{title}</span>
 						</div>
 					)}

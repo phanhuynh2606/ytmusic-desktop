@@ -1,25 +1,22 @@
 // Glass / backdrop blur — toggled via themes.blur
 
 ytmusic-player-page.ytmusic-app {
-  background: rgba(0, 0, 0, 0.78);
-  backdrop-filter: blur(20px);
+  background: rgba(8, 8, 12, 0.72) !important;
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
 }
 
 #player-bar-background.ytmusic-app-layout {
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  background: transparent !important;
 }
 
 tp-yt-paper-dialog,
 tp-yt-paper-listbox.ytmusic-menu-popup-renderer {
-  background-color: rgba(#000, 0.78) !important;
-  backdrop-filter: blur(10px);
-}
-
-// Soften thumbnail background when that chrome layer is on
-ytmusic-player-page:not([is-mweb-modernization-enabled]) .content.ytmusic-player-page:before {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  opacity: 1;
-  filter: saturate(120%) brightness(1.15) opacity(0.33) blur(16px);
+  background-color: rgba(18, 18, 24, 0.88) !important;
+  backdrop-filter: blur(25px) saturate(190%);
+  -webkit-backdrop-filter: blur(25px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px;
 }

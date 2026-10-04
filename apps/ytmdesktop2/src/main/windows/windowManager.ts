@@ -1,9 +1,9 @@
 import { applyYoutubeZoom, bindYoutubeWebContents, TOOLBAR_HEIGHT } from "@main/domain/uiZoom";
-import { getLifecycleContext } from "@main/lifecycle";
-import { chromecastArgvFor, CHROMECAST_SETTING_KEY } from "@shared/chromecast/flag";
 import { defaultUrl, isDevelopment, isProdDebug, isProduction } from "@main/infra/devUtils";
 import { toChromeUserAgent } from "@main/infra/userAgent";
 import { serverMain } from "@main/ipc/serverEvents";
+import { getLifecycleContext } from "@main/lifecycle";
+import { CHROMECAST_SETTING_KEY, chromecastArgvFor } from "@shared/chromecast/flag";
 import { logger } from "@shared/utils/console";
 import translations from "@translations/index";
 import { app, BrowserWindow, BrowserWindowConstructorOptions, WebContentsView } from "electron";
@@ -14,6 +14,7 @@ import { createWindowContext } from "./mappedWindow";
 import { createApiView, createView, googleLoginPopup } from "./view";
 import { pushWindowStates } from "./webContentUtils";
 import { getBoundsWithScaleFactor, wrapWindowHandler } from "./windowUtils";
+
 function isChromecastSettingEnabled(): boolean {
 	try {
 		const settings = getLifecycleContext().getProvider("settings") as { get?: (key: string, fallback?: boolean) => boolean };
@@ -76,7 +77,7 @@ export class WindowManager {
 			darkTheme: true,
 			titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
 			maximizable: true,
-			show: false,
+			show: true,
 			webPreferences: {
 				nodeIntegration: true,
 				contextIsolation: true,
@@ -134,7 +135,7 @@ export class WindowManager {
 			if (!this.mainWindow) return;
 
 			this.mainWindow.contentView.addChildView(view);
-			if (isDevelopment || isProdDebug) view.webContents.openDevTools({ mode: "detach" });
+			// if (isDevelopment || isProdDebug) view.webContents.openDevTools({ mode: "detach" });
 
 			const [width, height] = this.mainWindow.getSize();
 			view.setBounds({
@@ -191,7 +192,7 @@ export class WindowManager {
 					x: 0,
 					y: 0,
 				});
-				if (isDevelopment) view.webContents.openDevTools({ mode: "detach" });
+				// if (isDevelopment) view.webContents.openDevTools({ mode: "detach" });
 			},
 			{ lockSize: { resize: "width" }, transparent: true },
 		);
@@ -239,14 +240,14 @@ export class WindowManager {
 				this.handleGoogleLogin(GOOGLE_LOGIN_URL, view);
 			}
 		});
-		// view.webContents.on("did-finish-load", () => {
-		// 	if (this._youtubeReady) return;
-		// 	setTimeout(() => {
-		// 		if (this._youtubeReady) return;
-		// 		logger.warn("app.loadEnd fallback after youtube did-finish-load");
-		// 		serverMain.emit("app.loadEnd");
-		// 	}, 2500);
-		// });
+		view.webContents.on("did-finish-load", () => {
+			if (this._youtubeReady) return;
+			setTimeout(() => {
+				if (this._youtubeReady) return;
+				logger.warn("app.loadEnd fallback after youtube did-finish-load");
+				serverMain.emit("app.loadEnd");
+			}, 2000);
+		});
 		view.webContents.on("page-title-updated", (ev, title) => view.webContents.emit("window-title-updated", title));
 	}
 
@@ -289,6 +290,27 @@ export class WindowManager {
 		serverMain.on("app.loadStart", handleLoadStart);
 	}
 	private fromMaximized = false;
+	public setBackgroundThrottling(throttled: boolean) {
+		if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
+		try {
+			this.mainWindow.webContents?.setBackgroundThrottling(throttled);
+		} catch {}
+		if (this.views) {
+			try {
+				this.views.toolbarView?.webContents?.setBackgroundThrottling(throttled);
+			} catch {}
+			try {
+				this.views.youtubeView?.webContents?.setBackgroundThrottling(throttled);
+			} catch {}
+		}
+		if (this.loadingView && !this.loadingView.webContents?.isDestroyed()) {
+			try {
+				this.loadingView.webContents.setBackgroundThrottling(throttled);
+			} catch {}
+		}
+		logger.debug(`[WindowManager] Smart background throttling set to ${throttled}`);
+	}
+
 	private setupWindowEvents() {
 		if (!this.mainWindow || !this.views) return;
 		this.mainWindow.on("maximize", () => {
@@ -305,6 +327,21 @@ export class WindowManager {
 				this.updateViewBounds();
 			}, 100),
 		);
+		this.mainWindow.on("minimize", () => {
+			this.setBackgroundThrottling(true);
+		});
+		this.mainWindow.on("restore", () => {
+			this.setBackgroundThrottling(false);
+		});
+		this.mainWindow.on("hide", () => {
+			this.setBackgroundThrottling(true);
+		});
+		this.mainWindow.on("show", () => {
+			this.setBackgroundThrottling(false);
+		});
+		this.mainWindow.on("focus", () => {
+			this.setBackgroundThrottling(false);
+		});
 	}
 	private updateViewBounds() {
 		if (!this.mainWindow || !this.views) return;
@@ -341,9 +378,9 @@ export class WindowManager {
 		logger.debug("windowState", this.mainWindow.getBounds());
 
 		await this.views.youtubeView.webContents.loadURL(defaultUrl).then(() => {
-			if (isDevelopment || isProdDebug) {
-				this.views!.youtubeView.webContents.openDevTools({ mode: "detach" });
-			}
+			// if (isDevelopment || isProdDebug) {
+			// 	this.views!.youtubeView.webContents.openDevTools({ mode: "detach" });
+			// }
 
 			if (process.platform === "darwin") {
 				const bounds = getBoundsWithScaleFactor(this.mainWindow!);

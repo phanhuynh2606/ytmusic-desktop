@@ -54,3 +54,6 @@ test-results/
 
 # Internal testing scripts
 apps/ytmdesktop2/scripts/find-player-api-console.js
+
+# AI agent runs
+.agents/

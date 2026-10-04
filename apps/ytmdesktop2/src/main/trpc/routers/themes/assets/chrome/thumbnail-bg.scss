@@ -1,22 +1,58 @@
-// Thumbnail background (blur lives in chrome/blur.scss via themes.blur)
+// Dynamic Ambient Thumbnail Background & Accent
+// Tự động phủ dải màu và ảnh bìa bài hát phóng to làm mờ khắp toàn bộ ứng dụng
 
-ytmusic-player-page:not([is-mweb-modernization-enabled]) .content.ytmusic-player-page:before {
+ytmusic-player-page::before,
+ytmusic-browse-response::before {
   content: "";
+  position: fixed;
+  inset: -40px;
+  pointer-events: none;
   background-image: var(--ytmd-thumbnail-url);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-color: var(--ytmd-thumbnail-accent);
-  opacity: 0.33;
-  mix-blend-mode: exclusion;
-  border-radius: 8px;
-  overflow: hidden;
-  transform: translate3d(0, 0, 1px) scale(1.1);
-  position: absolute;
-  top: -12px;
-  left: calc(var(--ytmusic-guide-width) * -1);
-  right: calc(var(--ytmusic-guide-width) * -1);
-  bottom: -20px;
-  z-index: -1;
+  filter: blur(75px) saturate(180%) brightness(0.65);
+  -webkit-filter: blur(75px) saturate(180%) brightness(0.65);
+  transform: scale(1.15) translate3d(0, 0, 0);
+  opacity: 0.38;
+  z-index: 0;
+  transition: opacity 0.5s ease-in-out;
 }
 
+ytmusic-player-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 60% 35%, var(--ytmd-thumbnail-accent, transparent) 0%, transparent 70%);
+  opacity: 0.28;
+  mix-blend-mode: screen;
+  z-index: 0;
+  transition: background 0.5s ease-in-out;
+}
+
+// Đảm bảo nội dung hiển thị sắc nét nổi trên nền mờ
+ytmusic-player-page .content.ytmusic-player-page,
+#main-panel.ytmusic-player-page,
+ytmusic-player-queue,
+.side-panel.ytmusic-player-page {
+  position: relative;
+  z-index: 1;
+}
+
+// Header & Player Bar hòa trộn với màu bài hát
+ytmusic-nav-bar {
+  background: rgba(10, 10, 14, 0.72) !important;
+  backdrop-filter: blur(35px) saturate(180%);
+  -webkit-backdrop-filter: blur(35px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+ytmusic-player-bar.ytmusic-app {
+  background: rgba(14, 14, 18, 0.85) !important;
+  backdrop-filter: blur(35px) saturate(180%);
+  -webkit-backdrop-filter: blur(35px) saturate(180%);
+  border-top: 1px solid var(--ytmd-thumbnail-accent, rgba(255, 255, 255, 0.12)) !important;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.4s ease;
+}
