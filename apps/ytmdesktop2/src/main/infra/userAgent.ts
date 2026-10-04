@@ -45,8 +45,7 @@ export function getGoogleLoginUserAgent(): string {
 			return "Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0";
 		case "win32":
 		default:
-			// Classic brickGoogleUA from v0.11 / early 1.x era
-			return "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0";
+			return "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0";
 	}
 }
 

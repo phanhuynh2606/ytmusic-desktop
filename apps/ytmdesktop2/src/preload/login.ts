@@ -11,9 +11,11 @@ initializeWithDomLoaded(() => {
 	if (isYoutubeWindow()) reportLoginSuccess();
 }, preloadRoot);
 
-// Expose API to window
-contextExposer.expose("ytdapi", {
-	isYoutubeWindow: isYoutubeWindow(),
-	api: preloadRoot.api,
-	process: preloadRoot.app,
-});
+// Expose API to window only when on YouTube Music domain
+if (isYoutubeWindow()) {
+	contextExposer.expose("ytdapi", {
+		isYoutubeWindow: true,
+		api: preloadRoot.api,
+		process: preloadRoot.app,
+	});
+}

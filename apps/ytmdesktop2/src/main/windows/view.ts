@@ -132,10 +132,13 @@ export const googleLoginPopup = async (authUrl: string, parent?: Electron.Browse
 	const clearGC = () => {
 		timeoutHandler && clearTimeout(timeoutHandler);
 	};
-	ipcMain.once("subwindow.close/loginView", () => {
-		popup.close();
+	const closeHandler = () => {
+		if (!popup.isDestroyed()) {
+			popup.close();
+		}
 		clearGC();
-	});
+	};
+	ipcMain.once("subwindow.close/loginView", closeHandler);
 	const isMusicYoutubeUrl = (url: string) => {
 		try {
 			return new URL(url).hostname.indexOf("music.youtube") === 0;
@@ -154,17 +157,28 @@ export const googleLoginPopup = async (authUrl: string, parent?: Electron.Browse
 		const markAuthenticated = () => {
 			if (isAuthenticated) return;
 			isAuthenticated = true;
-			popup.close();
+			if (!popup.isDestroyed()) {
+				popup.close();
+			}
+		};
+		const onMusicRedirect = (_ev: Electron.Event, url: string) => {
+			if (popup.isDestroyed()) return;
+			if (isMusicYoutubeUrl(url)) markAuthenticated();
+		};
+		const cleanupListeners = () => {
+			ipcMain.removeListener("subwindow.close/loginView", closeHandler);
+			if (!loginView.webContents.isDestroyed()) {
+				loginView.webContents.removeListener("will-redirect", onMusicRedirect);
+				loginView.webContents.removeListener("will-navigate", onMusicRedirect);
+				loginView.webContents.removeListener("did-navigate", onMusicRedirect);
+				loginView.webContents.removeListener("did-navigate-in-page", onMusicRedirect);
+			}
 		};
 		popup.on("close", () => {
+			cleanupListeners();
 			resolve(isAuthenticated);
 			clearGC();
 		});
-		// Already logged in → Google lands on music.youtube during/after load.
-		// Attach before loadURL so we don't miss the redirect race.
-		const onMusicRedirect = (_ev: Electron.Event, url: string) => {
-			if (isMusicYoutubeUrl(url)) markAuthenticated();
-		};
 		loginView.webContents.on("will-redirect", onMusicRedirect);
 		loginView.webContents.on("will-navigate", onMusicRedirect);
 		loginView.webContents.on("did-navigate", onMusicRedirect);
@@ -181,6 +195,7 @@ export const googleLoginPopup = async (authUrl: string, parent?: Electron.Browse
 				httpReferrer: defaultUrl,
 			})
 			.then(() => {
+				if (popup.isDestroyed() || loginView.webContents.isDestroyed()) return;
 				if (isMusicYoutubeUrl(loginView.webContents.getURL())) markAuthenticated();
 			})
 			.catch(() => {
