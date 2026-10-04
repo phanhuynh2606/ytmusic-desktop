@@ -42,7 +42,7 @@
 		"test:watch": "vitest"
 	},
 	"license": "MIT",
-	"repository": "https://github.com/Venipa/ytmdesktop2",
+	"repository": "https://github.com/phanhuynh2606/ytmusic-desktop",
 	"engines": {
 		"node": ">=24.14.0",
 		"pnpm": ">=11.0.0"
