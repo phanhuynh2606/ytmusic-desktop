@@ -277,8 +277,8 @@ function TrayCoverArt({ src }: { src: string | null }) {
 
 const chromeButtonVariants = cva(
 	[
-		"inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-[transform,background-color,color] duration-100",
-		"enabled:hover:bg-accent/20 enabled:hover:text-foreground enabled:active:scale-95",
+		"inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 transition-all duration-150",
+		"enabled:hover:bg-foreground/10 enabled:hover:text-foreground enabled:active:scale-90",
 		"disabled:pointer-events-none disabled:opacity-40",
 		"[&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
 	].join(" "),
@@ -686,8 +686,8 @@ function TrayViewPage() {
 	const [contentHovered, setContentHovered] = useState(false);
 	const [leftThirdHovered, setLeftThirdHovered] = useState(false);
 	const [chromeTooltipOpen, setChromeTooltipOpen] = useState(false);
-	/** Portaled tooltips leave the tray DOM — keep chrome up while a chrome tooltip is open. */
-	const chromeVisible = contentHovered || chromeTooltipOpen || pinned;
+	/** Only show chrome buttons when user hovers over the tray widget (or tooltip open) */
+	const chromeVisible = contentHovered || chromeTooltipOpen;
 
 	const { mutateAsync: next } = trpc.track.next.useMutation();
 	const { mutateAsync: prev } = trpc.track.prev.useMutation();
@@ -984,14 +984,14 @@ function TrayViewPage() {
 				<div className="relative z-10 flex min-h-0 flex-1">
 					{/* Player column */}
 					<div className="relative flex min-w-0 flex-1 flex-col px-3 pt-3 pb-2">
-						{/* Chrome: fade in while pointer over content (or chrome tooltip open) */}
+						{/* Chrome: sleek ghost buttons, only fade in when hovered */}
 						<div
 							className={cn(
-								"no-drag absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-md bg-background/60 p-0.5 shadow-sm backdrop-blur-sm",
-								"transition-[opacity,transform] duration-200 ease-out",
+								"no-drag absolute top-1.5 right-2 z-30 flex items-center gap-1",
+								"transition-all duration-150 ease-out",
 								chromeVisible
 									? "pointer-events-auto translate-y-0 opacity-100"
-									: "pointer-events-none -translate-y-0.5 opacity-0",
+									: "pointer-events-none -translate-y-1 opacity-0",
 							)}
 						>
 							<Tooltip onOpenChange={setChromeTooltipOpen}>
@@ -1007,33 +1007,33 @@ function TrayViewPage() {
 												ev.stopPropagation();
 												void handlePinToggle();
 											}}
-											className={cn("no-drag", pinned && "text-foreground bg-accent/20")}
+											className={cn("no-drag", pinned && "text-accent hover:text-accent/80")}
 										>
-											<PinIcon className={cn(pinned && "fill-current")} />
+											<PinIcon className={cn("size-3.5", pinned && "fill-current rotate-45")} />
 										</ChromeButton>
 									}
 								/>
-								<TooltipContent side="bottom">{pinned ? "Unpin" : "Pin"}</TooltipContent>
+								<TooltipContent side="bottom">{pinned ? "Bỏ ghim" : "Ghim"}</TooltipContent>
 							</Tooltip>
 							<Tooltip onOpenChange={setChromeTooltipOpen}>
 								<TooltipTrigger
 									render={
 										<ChromeButton aria-label="Back to app" onClick={() => void openMain()}>
-											<ArrowLeftIcon />
+											<ArrowLeftIcon className="size-3.5" />
 										</ChromeButton>
 									}
 								/>
-								<TooltipContent side="bottom">Back to app</TooltipContent>
+								<TooltipContent side="bottom">Mở ứng dụng</TooltipContent>
 							</Tooltip>
 							<Tooltip onOpenChange={setChromeTooltipOpen}>
 								<TooltipTrigger
 									render={
 										<ChromeButton aria-label="Settings" onClick={() => void handleSettings()}>
-											<SettingsIcon />
+											<SettingsIcon className="size-3.5" />
 										</ChromeButton>
 									}
 								/>
-								<TooltipContent side="bottom">Settings</TooltipContent>
+								<TooltipContent side="bottom">Cài đặt</TooltipContent>
 							</Tooltip>
 						</div>
 
