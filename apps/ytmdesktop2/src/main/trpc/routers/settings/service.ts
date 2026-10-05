@@ -37,6 +37,9 @@ const defaultSettings = {
 	},
 	trayView: {
 		pinned: false,
+		widgetStyle: "default" as "default" | "capsule" | "lyrics" | "vinyl",
+		autoHideControls: false,
+		opacity: 100,
 	},
 	volumeRatio: {
 		enabled: true,

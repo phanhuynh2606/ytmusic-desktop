@@ -6,10 +6,10 @@ import { getLifecycleContext } from "@main/lifecycle";
 import { CHROMECAST_SETTING_KEY, chromecastArgvFor } from "@shared/chromecast/flag";
 import { logger } from "@shared/utils/console";
 import translations from "@translations/index";
-import { app, BrowserWindow, BrowserWindowConstructorOptions, WebContentsView } from "electron";
+import { app, BrowserWindow, BrowserWindowConstructorOptions, nativeTheme, WebContentsView } from "electron";
 import { debounce } from "lodash-es";
 import { join } from "path";
-import appIconPath from "~/build/favicon.ico?asset";
+import { getAppIconPath } from "./windowUtils";
 import { createWindowContext } from "./mappedWindow";
 import { createApiView, createView, googleLoginPopup } from "./view";
 import { pushWindowStates } from "./webContentUtils";
@@ -66,7 +66,7 @@ export class WindowManager {
 			minWidth: 800,
 			minHeight: 480,
 			autoHideMenuBar: true,
-			icon: appIconPath,
+			icon: getAppIconPath(),
 			backgroundColor: "#030404",
 			center: true,
 			closable: true,
@@ -338,6 +338,14 @@ export class WindowManager {
 		});
 		this.mainWindow.on("show", () => {
 			this.setBackgroundThrottling(false);
+		});
+		nativeTheme.on("updated", () => {
+			const icon = getAppIconPath();
+			for (const win of BrowserWindow.getAllWindows()) {
+				if (!win.isDestroyed()) {
+					win.setIcon(icon);
+				}
+			}
 		});
 		this.mainWindow.on("focus", () => {
 			this.setBackgroundThrottling(false);

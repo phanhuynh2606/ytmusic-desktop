@@ -5,7 +5,7 @@ import { createTrayMenu } from "@main/domain/trayMenu";
 import { serverMain } from "@main/ipc/serverEvents";
 import SettingsProvider from "@main/trpc/routers/settings/service";
 import TrayViewProvider from "@main/trpc/routers/trayView/service";
-import { App, Menu, Tray } from "electron";
+import { App, Menu, Tray, nativeTheme } from "electron";
 
 export default class TrayProvider extends BaseProvider implements AfterInit, OnDestroy {
 	get settingsInstance(): SettingsProvider {
@@ -76,6 +76,14 @@ export default class TrayProvider extends BaseProvider implements AfterInit, OnD
 			this._tray.setIgnoreDoubleClickEvents(true);
 			this._tray.on("click", () => {
 				void this.trayView.toggle();
+			});
+			nativeTheme.on("updated", () => {
+				if (this._tray && !this._tray.isDestroyed()) {
+					const updatedIcon = createTrayNativeImage();
+					if (!updatedIcon.isEmpty()) {
+						this._tray.setImage(updatedIcon);
+					}
+				}
 			});
 			this._tray.on("right-click", (_ev, bounds) => {
 				try {

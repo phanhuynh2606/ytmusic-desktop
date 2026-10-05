@@ -5,7 +5,7 @@ import { createLogger } from "@shared/utils/console";
 import translations from "@translations/index";
 import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain, shell, WebContentsView, WebContentsViewConstructorOptions, WebPreferences } from "electron";
 import { join } from "path";
-import appIconPath from "~/build/favicon.ico?asset";
+import { getAppIconPath } from "./windowUtils";
 import { LockSizeOptions, loadUrlOfWebContents, lockSizeToParent } from "./webContentUtils";
 
 const log = createLogger("windows").child("view");
@@ -87,7 +87,7 @@ export const googleLoginPopup = async (authUrl: string, parent?: Electron.Browse
 		preload: join(__dirname, "../preload/login.js"),
 	};
 	const { lockSize, popup } = await createPopup({
-		icon: appIconPath,
+		icon: getAppIconPath(),
 		title: translations.appName,
 		height: 580,
 		width: 800,

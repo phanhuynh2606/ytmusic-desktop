@@ -1,10 +1,13 @@
 import { platform } from "@electron-toolkit/utils";
 import { createLogger } from "@shared/utils/console";
-import { NativeImage, nativeImage } from "electron";
+import { NativeImage, nativeImage, nativeTheme } from "electron";
 import { existsSync, readFileSync } from "fs";
 import trayIconIco from "~/build/favicon.ico?asset";
+import trayIconIcoLight from "~/build/favicon-light.ico?asset";
 import trayIconIcns from "~/src/renderer/src/assets/icons/mac/icon.icns?asset";
+import trayIconIcnsLight from "~/src/renderer/src/assets/icons/mac/icon-light.icns?asset";
 import trayIconPng from "~/src/renderer/src/assets/icons/png/32x32.png?asset";
+import trayIconPngLight from "~/src/renderer/src/assets/icons/png/32x32-light.png?asset";
 
 const log = createLogger("trayIcon");
 
@@ -85,19 +88,24 @@ function sizeForTray(img: NativeImage): NativeImage {
  * Windows: ICO. macOS: ICNS then PNG. Linux: PNG.
  */
 export function createTrayNativeImage(): NativeImage {
+	const isDark = nativeTheme.shouldUseDarkColors;
+	const icoPath = isDark ? trayIconIco : trayIconIcoLight;
+	const icnsPath = isDark ? trayIconIcns : trayIconIcnsLight;
+	const pngPath = isDark ? trayIconPng : trayIconPngLight;
+
 	if (platform.isWindows) {
-		const ico = loadTrayImage(trayIconIco);
+		const ico = loadTrayImage(icoPath);
 		if (!ico.isEmpty()) return ico;
 	}
 
 	if (platform.isMacOS) {
-		const icns = loadTrayImage(trayIconIcns);
+		const icns = loadTrayImage(icnsPath);
 		if (!icns.isEmpty()) return sizeForTray(icns);
 	}
 
-	const png = loadTrayImage(trayIconPng);
+	const png = loadTrayImage(pngPath);
 	if (!png.isEmpty()) return sizeForTray(png);
 
 	// Last resort — build/ favicon / 32x32 if assets path missing in some builds.
-	return sizeForTray(loadTrayImage(trayIconIco));
+	return sizeForTray(loadTrayImage(icoPath));
 }

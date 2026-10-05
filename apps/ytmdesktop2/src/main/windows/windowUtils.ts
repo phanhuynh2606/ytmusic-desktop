@@ -4,9 +4,14 @@ import { isDevelopment, isProdDebug } from "@main/infra/devUtils";
 import { createYmlStore } from "@main/lib/store/createYmlStore";
 import { attachTrpcWindow } from "@main/trpc/handler";
 import { createLogger } from "@shared/utils/console";
-import { BrowserWindow, screen, shell, WebContentsView } from "electron";
+import { BrowserWindow, nativeTheme, screen, shell, WebContentsView } from "electron";
 import { join } from "path";
 import appIconPath from "~/build/favicon.ico?asset";
+import appIconPathLight from "~/build/favicon-light.ico?asset";
+
+export function getAppIconPath(): string {
+	return nativeTheme.shouldUseDarkColors ? appIconPath : appIconPathLight;
+}
 import { registerWindowDialogResponse } from "./dialogResponse";
 import { loadUrlOfWindow, syncWindowStateToWebContents } from "./webContentUtils";
 
@@ -276,7 +281,7 @@ export async function createAppWindow(appOptions?: Partial<WindowOptions>) {
 		maximizable: maximizeable === true,
 		backgroundColor: "#000000",
 		fullscreenable: !maxWidth && !maxHeight,
-		icon: appIconPath,
+		icon: getAppIconPath(),
 		frame: false,
 		parent,
 		modal: parent && top === true,
@@ -476,4 +481,4 @@ export async function onWindowLoad(
 	win.webContents.on("did-finish-load", () => void callback());
 }
 
-export { appIconPath };
+export { appIconPath, appIconPathLight };

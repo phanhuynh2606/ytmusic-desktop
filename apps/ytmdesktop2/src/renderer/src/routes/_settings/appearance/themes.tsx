@@ -15,10 +15,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FieldGroup } from "@/components/ui/field";
 import { useSettingsState } from "@/hooks/use-settings";
 import { trpc } from "@/lib/trpc";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_settings/appearance/themes")({
 	component: ThemesSettingsPage,
 });
+
+const WIDGET_STYLES = [
+	{
+		id: "default",
+		label: "Tiêu chuẩn (Full)",
+		description: "Đầy đủ thanh tiến trình, ảnh bìa, lời và phím điều khiển",
+		badge: "Standard",
+	},
+	{
+		id: "capsule",
+		label: "Thanh con nhộng (Capsule)",
+		description: "Siêu nhỏ gọn phong cách Dynamic Island, chữ chạy mượt mà",
+		badge: "Compact",
+	},
+	{
+		id: "lyrics",
+		label: "Tập trung lời (Karaoke)",
+		description: "Phóng to lời bài hát đồng bộ ở trung tâm, bìa album mờ ảo",
+		badge: "Lyrics",
+	},
+	{
+		id: "vinyl",
+		label: "Đĩa than (Vinyl Record)",
+		description: "Đĩa than xoay tròn theo điệu nhạc, đậm chất retro chill",
+		badge: "Retro",
+	},
+] as const;
 
 const THEME_METADATA: Record<
 	string,
@@ -89,6 +117,7 @@ function ThemesSettingsPage() {
 		},
 	});
 	const [customFile, , { isPending: pathPending }] = useSettingsState("themes.customFile", "");
+	const [widgetStyle, setWidgetStyle] = useSettingsState<string>("trayView.widgetStyle", "default");
 	const { data: themes } = trpc.themes.list.useQuery();
 	const { mutateAsync: openFile } = trpc.app.openFile.useMutation();
 
@@ -104,7 +133,8 @@ function ThemesSettingsPage() {
 	];
 
 	return (
-		<Card>
+		<div className="space-y-6">
+			<Card>
 			<CardHeader>
 				<CardTitle>Themes & Giao diện</CardTitle>
 				<CardDescription>
@@ -252,5 +282,57 @@ function ThemesSettingsPage() {
 				</FieldGroup>
 			</CardContent>
 		</Card>
-	);
+
+		<Card className="mt-6">
+			<CardHeader>
+				<CardTitle>Kiểu dáng Widget (Mini Player)</CardTitle>
+				<CardDescription>
+					Tùy biến phong cách hiển thị của Mini Player nổi trên màn hình theo sở thích của bạn.
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+					{WIDGET_STYLES.map((ws) => {
+						const isSelected = (widgetStyle || "default") === ws.id;
+						return (
+							<button
+								key={ws.id}
+								type="button"
+								onClick={() => setWidgetStyle(ws.id)}
+								className={cn(
+									"group relative flex flex-col p-4 rounded-xl border text-left transition-all duration-200",
+									"hover:border-primary/50 hover:bg-muted/40",
+									isSelected
+										? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
+										: "border-border/60 bg-card/60",
+								)}
+							>
+								<div className="flex items-center justify-between w-full mb-2">
+									<Badge variant={isSelected ? "default" : "outline"} className="text-[10px] font-medium">
+										{ws.badge}
+									</Badge>
+									{isSelected && (
+										<div className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+											<RiCheckLine className="size-3.5" />
+										</div>
+									)}
+								</div>
+								<span className="font-semibold text-sm text-foreground">{ws.label}</span>
+								<p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ws.description}</p>
+							</button>
+						);
+					})}
+				</div>
+				<div className="mt-4 pt-4 border-t border-border/60">
+					<SettingsCheckbox
+						configKey="trayView.autoHideControls"
+						description="Tự động ẩn thanh di chuyển bên trái và phím tắt kết nối bên phải khi không rê chuột vào widget để giao diện luôn sạch sẽ."
+					>
+						Tự động ẩn thanh điều khiển (Auto-hide Chrome)
+					</SettingsCheckbox>
+				</div>
+			</CardContent>
+		</Card>
+	</div>
+);
 }

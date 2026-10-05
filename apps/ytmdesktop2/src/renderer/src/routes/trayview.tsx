@@ -191,7 +191,19 @@ function TrayBleedArt({ src, accent }: { src: string | null; accent: string | nu
 	);
 }
 
-function TrayAccentPill({ accent, drag, expanded }: { accent: string | null; drag?: boolean; expanded?: boolean }) {
+function TrayAccentPill({
+	accent,
+	drag,
+	expanded,
+	autoHide,
+	contentHovered,
+}: {
+	accent: string | null;
+	drag?: boolean;
+	expanded?: boolean;
+	autoHide?: boolean;
+	contentHovered?: boolean;
+}) {
 	const [dragLayer, setDragLayer] = useState(false);
 
 	useEffect(() => {
@@ -206,8 +218,9 @@ function TrayAccentPill({ accent, drag, expanded }: { accent: string | null; dra
 	return (
 		<div
 			className={cn(
-				"relative z-10 flex shrink-0 items-stretch justify-center py-2.5 ml-1 no-drag transition-[width] duration-200 ease-out",
+				"relative z-10 flex shrink-0 items-stretch justify-center py-2.5 ml-1 no-drag transition-[width,opacity,transform] duration-200 ease-out",
 				expanded ? "w-6" : "w-3",
+				autoHide && !contentHovered && "opacity-0 pointer-events-none -translate-x-1",
 			)}
 			aria-hidden={!drag}
 			title={drag ? "Drag" : undefined}
@@ -343,6 +356,317 @@ function ControlToggle({
 function pointerInsideWindow(ev: { clientX: number; clientY: number }): boolean {
 	return ev.clientX >= 0 && ev.clientY >= 0 && ev.clientX < window.innerWidth && ev.clientY < window.innerHeight;
 }
+
+function AudioEqualizer({ playing, color }: { playing: boolean; color?: string | null }) {
+	return (
+		<div className="flex items-end gap-0.5 h-3.5 px-0.5" aria-hidden>
+			<motion.span
+				className="w-0.5 rounded-full bg-accent"
+				style={color ? { backgroundColor: color } : undefined}
+				animate={playing ? { height: ["25%", "100%", "45%", "25%"] } : { height: "25%" }}
+				transition={playing ? { repeat: Infinity, duration: 0.6, ease: "easeInOut" } : { duration: 0.2 }}
+			/>
+			<motion.span
+				className="w-0.5 rounded-full bg-accent"
+				style={color ? { backgroundColor: color } : undefined}
+				animate={playing ? { height: ["70%", "30%", "95%", "70%"] } : { height: "45%" }}
+				transition={playing ? { repeat: Infinity, duration: 0.5, ease: "easeInOut" } : { duration: 0.2 }}
+			/>
+			<motion.span
+				className="w-0.5 rounded-full bg-accent"
+				style={color ? { backgroundColor: color } : undefined}
+				animate={playing ? { height: ["90%", "40%", "70%", "90%"] } : { height: "30%" }}
+				transition={playing ? { repeat: Infinity, duration: 0.7, ease: "easeInOut" } : { duration: 0.2 }}
+			/>
+		</div>
+	);
+}
+
+function VinylDisc({
+	artSrc,
+	playing,
+	displayAccent,
+}: {
+	artSrc: string | null;
+	playing: boolean;
+	displayAccent: string | null;
+}) {
+	return (
+		<div className="relative size-28 shrink-0 flex items-center justify-center select-none">
+			{/* Vinyl Disc Body with Grooves */}
+			<motion.div
+				className="relative size-28 rounded-full border-2 border-neutral-700/80 shadow-2xl flex items-center justify-center overflow-hidden"
+				style={{
+					background: "radial-gradient(circle, #222 0%, #161616 45%, #0f0f0f 75%, #050505 100%)",
+					boxShadow: "0 6px 20px rgba(0,0,0,0.6), inset 0 0 8px rgba(255,255,255,0.06)",
+				}}
+				animate={playing ? { rotate: 360 } : undefined}
+				transition={playing ? { repeat: Infinity, duration: 8, ease: "linear" } : undefined}
+			>
+				{/* Concentric Grooves */}
+				<div className="pointer-events-none absolute inset-2.5 rounded-full border border-white/5" />
+				<div className="pointer-events-none absolute inset-5 rounded-full border border-white/5" />
+				<div className="pointer-events-none absolute inset-7.5 rounded-full border border-white/5" />
+				<div className="pointer-events-none absolute inset-10 rounded-full border border-white/5" />
+
+				{/* Vinyl Sheen Reflex */}
+				<div
+					className="pointer-events-none absolute inset-0 rounded-full opacity-25"
+					style={{
+						background:
+							"conic-gradient(from 45deg, transparent 0deg, rgba(255,255,255,0.3) 45deg, transparent 90deg, transparent 180deg, rgba(255,255,255,0.3) 225deg, transparent 270deg)",
+					}}
+				/>
+
+				{/* Center Label (Album Cover) */}
+				<div
+					className="relative size-12 rounded-full overflow-hidden border-2 border-neutral-800 shadow-md flex items-center justify-center"
+					style={displayAccent ? { borderColor: displayAccent } : undefined}
+				>
+					{artSrc ? (
+						<img src={artSrc} alt="" className="size-full object-cover pointer-events-none" />
+					) : (
+						<div className="size-full bg-neutral-800 flex items-center justify-center text-[9px] font-bold text-neutral-400">
+							YTM
+						</div>
+					)}
+					{/* Spindle hole */}
+					<div className="absolute size-2 rounded-full bg-neutral-950 ring-1 ring-white/40" />
+				</div>
+			</motion.div>
+
+			{/* Turntable Stylus / Tone Arm Hint */}
+			<div
+				className={cn(
+					"pointer-events-none absolute -top-1 right-0 w-6 h-10 border-r-2 border-t-2 border-neutral-400/80 rounded-tr-lg transition-transform duration-300 origin-top-right",
+					playing ? "rotate-6 translate-x-0" : "-rotate-12 translate-x-1 opacity-70",
+				)}
+			>
+				<div className="absolute -bottom-1 -left-1 size-2 bg-accent rounded-sm shadow-sm" />
+			</div>
+		</div>
+	);
+}
+
+interface TrayProgressBarProps {
+	time: { current: string; end: string; pct: number } | null;
+	durationSec: number;
+	displayAccent: string | null;
+	disabled?: boolean;
+	onSeek: (timeMs: number) => void;
+	compact?: boolean;
+}
+
+function TrayProgressBar({
+	time,
+	durationSec,
+	displayAccent,
+	disabled = false,
+	onSeek,
+	compact = false,
+}: TrayProgressBarProps) {
+	const [seekHovering, setSeekHovering] = useState(false);
+	const durationSecRef = useRef(durationSec);
+	durationSecRef.current = durationSec;
+	const currentTimeLabel = time?.current ?? "0:00";
+
+	const seekTrackRef = useRef<HTMLDivElement>(null);
+	const seekHoverFillRef = useRef<HTMLDivElement>(null);
+	const seekThumbRef = useRef<HTMLDivElement>(null);
+	const seekTipRef = useRef<HTMLDivElement>(null);
+	const seekTimeRef = useRef<HTMLSpanElement>(null);
+	const seekHoveringRef = useRef(false);
+
+	useEffect(() => {
+		if (seekHoveringRef.current) return;
+		if (seekTimeRef.current) seekTimeRef.current.textContent = currentTimeLabel;
+	}, [currentTimeLabel]);
+
+	function syncSeekHover(clientX: number) {
+		const trackEl = seekTrackRef.current;
+		if (!trackEl) return;
+		const rect = trackEl.getBoundingClientRect();
+		if (rect.width <= 0) return;
+		const pct = clamp(((clientX - rect.left) / rect.width) * 100, 0, 100);
+		const pctStr = `${pct}%`;
+		if (seekHoverFillRef.current) seekHoverFillRef.current.style.width = pctStr;
+		if (seekThumbRef.current) seekThumbRef.current.style.left = pctStr;
+		if (seekTipRef.current) seekTipRef.current.style.left = pctStr;
+		const dur = durationSecRef.current;
+		const label = dur > 0 ? formatTime((pct / 100) * dur) : "0:00";
+		if (seekTipRef.current) seekTipRef.current.textContent = label;
+		if (seekTimeRef.current) seekTimeRef.current.textContent = label;
+	}
+
+	function handleSeekHover(ev: MouseEvent<HTMLDivElement>) {
+		syncSeekHover(ev.clientX);
+	}
+
+	function handleSeekEnter(ev: MouseEvent<HTMLDivElement>) {
+		seekHoveringRef.current = true;
+		setSeekHovering(true);
+		requestAnimationFrame(() => syncSeekHover(ev.clientX));
+	}
+
+	function clearSeekHover() {
+		seekHoveringRef.current = false;
+		setSeekHovering(false);
+		if (seekTimeRef.current) seekTimeRef.current.textContent = currentTimeLabel;
+	}
+
+	function handleClick(ev: MouseEvent<HTMLDivElement>) {
+		if (disabled) return;
+		const el = ev.currentTarget;
+		const rect = el.getBoundingClientRect();
+		const percSelected = (ev.clientX - rect.left) / rect.width;
+		const dur = durationSecRef.current;
+		if (dur <= 0) return;
+		const seekTime = clamp(dur * percSelected, 0, dur) * 1000;
+		onSeek(seekTime);
+	}
+
+	return (
+		<div className={cn("flex items-center gap-2", compact ? "mt-1.5" : "mt-3")}>
+			<span
+				ref={seekTimeRef}
+				className="w-9 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground/50"
+			/>
+			<div
+				ref={seekTrackRef}
+				className={cn(
+					"group relative h-1.5 min-w-0 flex-1 cursor-pointer rounded-full bg-muted/80",
+					disabled && "pointer-events-none opacity-40",
+				)}
+				onClick={handleClick}
+				onMouseMove={handleSeekHover}
+				onMouseEnter={handleSeekEnter}
+				onMouseLeave={clearSeekHover}
+				role="slider"
+				aria-label="Seek"
+				aria-valuenow={time?.pct ?? 0}
+				aria-valuemin={0}
+				aria-valuemax={100}
+				tabIndex={0}
+			>
+				{/* Played */}
+				<div
+					className="absolute inset-y-0 left-0 rounded-full bg-accent transition-[width] duration-100 ease-out"
+					style={{
+						width: `${time?.pct ?? 0}%`,
+						...(displayAccent ? { backgroundColor: displayAccent } : {}),
+					}}
+				/>
+				{/* Hover preview */}
+				<div
+					ref={seekHoverFillRef}
+					className={cn("absolute inset-y-0 left-0 rounded-full bg-foreground/25", !seekHovering && "hidden")}
+					style={{ width: 0 }}
+				/>
+				{/* Scrubber thumb + tip */}
+				<div
+					ref={seekThumbRef}
+					className={cn(
+						"pointer-events-none absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-2 ring-background",
+						!seekHovering && "hidden",
+					)}
+					style={{ left: 0 }}
+				/>
+				<div
+					ref={seekTipRef}
+					className={cn(
+						"pointer-events-none absolute bottom-full z-20 mb-1.5 -translate-x-1/2 rounded-md bg-foreground px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-background shadow-sm",
+						!seekHovering && "hidden",
+					)}
+					style={{ left: 0 }}
+				/>
+			</div>
+			<span className="w-9 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">{time?.end ?? "0:00"}</span>
+		</div>
+	);
+}
+
+interface TrayTransportDockProps {
+	playing: boolean;
+	trackBusy: boolean;
+	disabled: boolean;
+	hasLike: boolean;
+	hasDislike: boolean;
+	liked?: boolean;
+	disliked?: boolean;
+	displayAccent: string | null;
+	onPlayPause: () => void;
+	onPrev: () => void;
+	onNext: () => void;
+	onLike?: () => void;
+	onDislike?: () => void;
+	compact?: boolean;
+}
+
+function TrayTransportDock({
+	playing,
+	trackBusy,
+	disabled,
+	hasLike,
+	hasDislike,
+	liked,
+	disliked,
+	displayAccent,
+	onPlayPause,
+	onPrev,
+	onNext,
+	onLike,
+	onDislike,
+}: TrayTransportDockProps) {
+	return (
+		<div className="flex items-center gap-0.5 rounded-full border border-border/50 bg-background/50 p-1 shadow-sm backdrop-blur-md">
+			{hasLike && onLike ? (
+				<PlayerButton
+					active={!!liked}
+					disabled={trackBusy || disabled}
+					aria-label="Like"
+					style={liked && displayAccent ? { color: displayAccent } : undefined}
+					onClick={onLike}
+				>
+					<LikeIcon />
+				</PlayerButton>
+			) : null}
+			<PlayerButton disabled={trackBusy || disabled} aria-label="Previous" onClick={onPrev}>
+				<PrevIcon />
+			</PlayerButton>
+			<PlayerButton
+				variant="hero"
+				disabled={trackBusy || disabled}
+				aria-label={playing ? "Pause" : "Play"}
+				style={
+					displayAccent
+						? {
+								backgroundColor: `color-mix(in oklab, ${displayAccent} 28%, transparent)`,
+								color: displayAccent,
+							}
+						: undefined
+				}
+				onClick={onPlayPause}
+			>
+				{playing ? <PauseIcon /> : <PlayIcon />}
+			</PlayerButton>
+			<PlayerButton disabled={trackBusy || disabled} aria-label="Next" onClick={onNext}>
+				<NextIcon />
+			</PlayerButton>
+			{hasDislike && onDislike ? (
+				<PlayerButton
+					active={!!disliked}
+					disabled={trackBusy || disabled}
+					aria-label="Dislike"
+					style={disliked && displayAccent ? { color: displayAccent } : undefined}
+					onClick={onDislike}
+				>
+					<LikeIcon className="rotate-180" />
+				</PlayerButton>
+			) : null}
+		</div>
+	);
+}
+
 function TrayViewPage() {
 	const utils = trpc.useUtils();
 	const track = useTrack();
@@ -355,6 +679,9 @@ function TrayViewPage() {
 	const { enabled: lastFmEnabled, toggleLastFM, lastFM, lastFMLoading, isBusy: lastFmBusy } = useLastFm();
 	const { enabled: discordEnabled, toggle: toggleDiscord, loading: discordLoading, connected: discordConnected, error: discordError } = useDiscord();
 	const [apiEnabled, setApiEnabled] = useSettingsState<boolean>("api.enabled", false);
+	const [widgetStyle] = useSettingsState<"default" | "capsule" | "lyrics" | "vinyl">("trayView.widgetStyle", "default");
+	const [autoHideControls] = useSettingsState<boolean>("trayView.autoHideControls", false);
+	const [activeTheme] = useSettingsState<string>("themes.selected", "default");
 	const { data: pinned = false } = trpc.trayView.pinned.useQuery();
 	const [contentHovered, setContentHovered] = useState(false);
 	const [leftThirdHovered, setLeftThirdHovered] = useState(false);
@@ -499,22 +826,26 @@ function TrayViewPage() {
 		};
 	}, [videoId, rawTitle, rawAuthor]);
 
-	// Current lyric line
-	const currentLine = useMemo(() => {
-		if (!lrcLines.length) return null;
+	// Current, previous and next lyric lines
+	const { currentLine, prevLine, nextLine } = useMemo(() => {
+		if (!lrcLines.length) return { currentLine: null, prevLine: null, nextLine: null };
 		const curMs = progress * 1000;
 		if (lrcLines[0] && curMs + 200 < lrcLines[0].timeMs) {
-			return null;
+			return { currentLine: null, prevLine: null, nextLine: lrcLines[0]?.text || null };
 		}
-		let line: LrcLine | null = null;
+		let idx = -1;
 		for (let i = 0; i < lrcLines.length; i++) {
 			if (lrcLines[i].timeMs <= curMs + 200) {
-				line = lrcLines[i];
+				idx = i;
 			} else {
 				break;
 			}
 		}
-		return line?.text || null;
+		return {
+			currentLine: idx >= 0 ? lrcLines[idx]?.text || null : null,
+			prevLine: idx > 0 ? lrcLines[idx - 1]?.text || null : null,
+			nextLine: idx >= 0 && idx + 1 < lrcLines.length ? lrcLines[idx + 1]?.text || null : null,
+		};
 	}, [lrcLines, progress]);
 
 	const time = useMemo((): { current: string; end: string; pct: number } | null => {
@@ -588,77 +919,40 @@ function TrayViewPage() {
 		}
 	}
 
-	const [seekHovering, setSeekHovering] = useState(false);
 	const durationSec = playState?.duration || Number(track?.meta?.duration) || 0;
-	const durationSecRef = useRef(durationSec);
-	durationSecRef.current = durationSec;
-	const currentTimeLabel = time?.current ?? "0:00";
 
-	const seekTrackRef = useRef<HTMLDivElement>(null);
-	const seekHoverFillRef = useRef<HTMLDivElement>(null);
-	const seekThumbRef = useRef<HTMLDivElement>(null);
-	const seekTipRef = useRef<HTMLDivElement>(null);
-	const seekTimeRef = useRef<HTMLSpanElement>(null);
-	const seekHoveringRef = useRef(false);
-
-	useEffect(() => {
-		if (seekHoveringRef.current) return;
-		if (seekTimeRef.current) seekTimeRef.current.textContent = currentTimeLabel;
-	}, [currentTimeLabel]);
-
-	function syncSeekHover(clientX: number) {
-		const trackEl = seekTrackRef.current;
-		if (!trackEl) return;
-		const rect = trackEl.getBoundingClientRect();
-		if (rect.width <= 0) return;
-		const pct = clamp(((clientX - rect.left) / rect.width) * 100, 0, 100);
-		const pctStr = `${pct}%`;
-		if (seekHoverFillRef.current) seekHoverFillRef.current.style.width = pctStr;
-		if (seekThumbRef.current) seekThumbRef.current.style.left = pctStr;
-		if (seekTipRef.current) seekTipRef.current.style.left = pctStr;
-		const dur = durationSecRef.current;
-		const label = dur > 0 ? formatTime((pct / 100) * dur) : "0:00";
-		if (seekTipRef.current) seekTipRef.current.textContent = label;
-		if (seekTimeRef.current) seekTimeRef.current.textContent = label;
-	}
-
-	function handleSeekHover(ev: MouseEvent<HTMLDivElement>) {
-		syncSeekHover(ev.clientX);
-	}
-
-	function handleSeekEnter(ev: MouseEvent<HTMLDivElement>) {
-		seekHoveringRef.current = true;
-		setSeekHovering(true);
-		requestAnimationFrame(() => syncSeekHover(ev.clientX));
-	}
-
-	function clearSeekHover() {
-		seekHoveringRef.current = false;
-		setSeekHovering(false);
-		if (seekTimeRef.current) seekTimeRef.current.textContent = currentTimeLabel;
-	}
-
-	function setCurrentTime(ev: MouseEvent<HTMLDivElement>) {
+	function handleSeek(seekTimeMs: number) {
 		if (trackBusy) return;
 		const current = playStateRef.current;
 		if (!current) return;
-		const el = ev.currentTarget;
-		const rect = el.getBoundingClientRect();
-		const percSelected = (ev.clientX - rect.left) / rect.width;
-		const duration = current.duration || Number(track?.meta?.duration) || 0;
-		if (duration <= 0) return;
-		const seekTime = clamp(duration * percSelected, 0, duration) * 1000;
+		const dur = current.duration || Number(track?.meta?.duration) || 0;
+		if (dur <= 0) return;
 		setTrackBusy(true);
-		void seek({ time: seekTime, type: "seek" })
+		void seek({ time: seekTimeMs, type: "seek" })
 			.then(() => {
-				patchPlayState(utils, { progress: seekTime / 1000, duration });
+				patchPlayState(utils, { progress: seekTimeMs / 1000, duration: dur });
 			})
 			.finally(() => setTrackBusy(false));
 	}
 
+	const themeContainerClass = useMemo(() => {
+		switch (activeTheme) {
+			case "oled":
+				return "bg-black text-white border-neutral-800 shadow-2xl";
+			case "cyberpunk":
+				return "bg-[#0b001a] text-cyan-200 border-pink-500/40 shadow-[0_0_25px_rgba(236,72,153,0.2)]";
+			case "mica":
+				return "bg-background/60 backdrop-blur-2xl border-white/20 shadow-xl";
+			case "liquid-glass":
+				return "bg-background/40 backdrop-blur-3xl border-white/25 shadow-2xl";
+			default:
+				return "bg-background text-foreground border-border shadow-sm";
+		}
+	}, [activeTheme]);
+
 	return (
 		<div
-			className="absolute inset-0 flex overflow-hidden border border-border bg-background text-foreground shadow-sm"
+			className={cn("absolute inset-0 flex overflow-hidden border", themeContainerClass)}
 			onMouseEnter={(ev) => {
 				setContentHovered(true);
 				const { left, width } = ev.currentTarget.getBoundingClientRect();
@@ -678,7 +972,13 @@ function TrayViewPage() {
 			}}
 		>
 			<TrayBleedArt src={artSrc} accent={displayAccent} />
-			<TrayAccentPill accent={displayAccent} drag={pinned} expanded={pinned && leftThirdHovered} />
+			<TrayAccentPill
+				accent={displayAccent}
+				drag={pinned}
+				expanded={pinned && leftThirdHovered}
+				autoHide={autoHideControls}
+				contentHovered={contentHovered}
+			/>
 
 			<div className="no-drag relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
 				<div className="relative z-10 flex min-h-0 flex-1">
@@ -737,145 +1037,259 @@ function TrayViewPage() {
 							</Tooltip>
 						</div>
 
-						<div className="flex items-start gap-2.5">
-							<TrayCoverArt src={artSrc} />
+						{/* Capsule / Dynamic Island Mode */}
+						{widgetStyle === "capsule" && (
+							<div className="flex flex-col h-full justify-between">
+								<div className="flex items-center gap-2.5 rounded-2xl bg-background/50 border border-border/40 p-2 shadow-sm backdrop-blur-md pr-16">
+									<div className="relative size-10 shrink-0 overflow-hidden rounded-full ring-2 ring-border/60 shadow-sm">
+										{artSrc ? (
+											<motion.img
+												key={artSrc}
+												src={artSrc}
+												alt=""
+												className="size-full object-cover pointer-events-none select-none"
+												animate={playing ? { rotate: 360 } : undefined}
+												transition={playing ? { repeat: Infinity, duration: 12, ease: "linear" } : undefined}
+											/>
+										) : (
+											<div className="size-full bg-muted flex items-center justify-center text-[9px] font-bold text-muted-foreground">
+												YTM
+											</div>
+										)}
+									</div>
 
-							<div className="min-w-0 flex-1 pt-0.5">
-								<p className="truncate text-base leading-tight font-semibold">{title}</p>
-								{artist ? <p className="mt-0.5 truncate text-sm text-muted-foreground">{artist}</p> : null}
-								{currentLine ? (
-									<p className="mt-1 truncate text-xs font-semibold text-emerald-400 flex items-center gap-1.5 drop-shadow-sm">
-										<span className="shrink-0 text-[11px]">♪</span>
-										<span className="truncate">{currentLine}</span>
-									</p>
-								) : lyricsLoading ? (
-									<p className="mt-1 truncate text-[11px] text-muted-foreground/60 italic flex items-center gap-1">
-										<span className="shrink-0 text-[10px]">♪</span>
-										<span>Đang tìm lời bài hát…</span>
-									</p>
-								) : null}
-							</div>
-						</div>
+									<div className="min-w-0 flex-1">
+										<div className="flex items-center gap-1.5">
+											<p className="truncate text-sm font-semibold leading-tight">{title}</p>
+											<AudioEqualizer playing={playing} color={displayAccent} />
+										</div>
+										{artist ? <p className="truncate text-xs text-muted-foreground mt-0.5">{artist}</p> : null}
+									</div>
 
-						{/* Progress + duration */}
-						<div className="mt-3 flex items-center gap-2">
-							<span
-								ref={seekTimeRef}
-								className="w-9 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground/40"
-							/>
-							<div
-								ref={seekTrackRef}
-								className={cn(
-									"group relative h-1.5 min-w-0 flex-1 cursor-pointer rounded-full bg-muted/80",
-									!track && "pointer-events-none opacity-40",
-								)}
-								onClick={setCurrentTime}
-								onMouseMove={handleSeekHover}
-								onMouseEnter={handleSeekEnter}
-								onMouseLeave={clearSeekHover}
-								role="slider"
-								aria-label="Seek"
-								aria-valuenow={time?.pct ?? 0}
-								aria-valuemin={0}
-								aria-valuemax={100}
-								tabIndex={0}
-							>
-								{/* Played */}
-								<div
-									className="absolute inset-y-0 left-0 rounded-full bg-accent transition-[width] duration-100 ease-out"
-									style={{
-										width: `${time?.pct ?? 0}%`,
-										...(displayAccent ? { backgroundColor: displayAccent } : {}),
-									}}
-								/>
-								{/* Hover preview — imperative width, no transition */}
-								<div
-									ref={seekHoverFillRef}
-									className={cn("absolute inset-y-0 left-0 rounded-full bg-foreground/25", !seekHovering && "hidden")}
-									style={{ width: 0 }}
-								/>
-								{/* Scrubber thumb + tip — follow cursor via refs */}
-								<div
-									ref={seekThumbRef}
-									className={cn(
-										"pointer-events-none absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-2 ring-background",
-										!seekHovering && "hidden",
+									{hasLike && (
+										<PlayerButton
+											active={!!playState?.liked}
+											disabled={trackBusy || !track}
+											aria-label="Like"
+											style={playState?.liked && displayAccent ? { color: displayAccent } : undefined}
+											onClick={likeToggle}
+											className="size-7"
+										>
+											<LikeIcon className="size-3.5" />
+										</PlayerButton>
 									)}
-									style={{ left: 0 }}
-								/>
-								<div
-									ref={seekTipRef}
-									className={cn(
-										"pointer-events-none absolute bottom-full z-20 mb-1.5 -translate-x-1/2 rounded-md bg-foreground px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-background shadow-sm",
-										!seekHovering && "hidden",
-									)}
-									style={{ left: 0 }}
-								/>
-							</div>
-							<span className="w-9 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">{time?.end ?? "0:00"}</span>
-						</div>
+								</div>
 
-						{/* Transport — segmented dock */}
-						<div className="mt-auto flex justify-center pt-2">
-							<div className="flex items-center gap-0.5 rounded-full border border-border/50 bg-background/50 p-1 shadow-sm backdrop-blur-md">
-								{hasLike ? (
-									<PlayerButton
-										active={!!playState?.liked}
-										disabled={trackBusy || !track}
-										aria-label="Like"
-										style={
-											playState?.liked && displayAccent
-												? { color: displayAccent }
-												: undefined
-										}
-										onClick={likeToggle}
-									>
-										<LikeIcon />
-									</PlayerButton>
-								) : null}
-								<PlayerButton disabled={trackBusy || !track} aria-label="Previous" onClick={handlePrev}>
-									<PrevIcon />
-								</PlayerButton>
-								<PlayerButton
-									variant="hero"
+								<TrayProgressBar
+									time={time}
+									durationSec={durationSec}
+									displayAccent={displayAccent}
 									disabled={trackBusy || !track}
-									aria-label={playing ? "Pause" : "Play"}
-									style={
-										displayAccent
-											? {
-													backgroundColor: `color-mix(in oklab, ${displayAccent} 28%, transparent)`,
-													color: displayAccent,
-												}
-											: undefined
-									}
-									onClick={() => void (!playing ? play() : pause())}
-								>
-									{playing ? <PauseIcon /> : <PlayIcon />}
-								</PlayerButton>
-								<PlayerButton disabled={trackBusy || !track} aria-label="Next" onClick={handleNext}>
-									<NextIcon />
-								</PlayerButton>
-								{hasDislike ? (
-									<PlayerButton
-										active={!!playState?.disliked}
-										disabled={trackBusy || !track}
-										aria-label="Dislike"
-										style={
-											playState?.disliked && displayAccent
-												? { color: displayAccent }
-												: undefined
-										}
-										onClick={dislikeToggle}
-									>
-										<LikeIcon className="rotate-180" />
-									</PlayerButton>
-								) : null}
+									onSeek={handleSeek}
+									compact
+								/>
+
+								<div className="flex justify-center pb-1">
+									<TrayTransportDock
+										playing={playing}
+										trackBusy={trackBusy}
+										disabled={!track}
+										hasLike={false}
+										hasDislike={false}
+										displayAccent={displayAccent}
+										onPlayPause={() => void (!playing ? play() : pause())}
+										onPrev={handlePrev}
+										onNext={handleNext}
+									/>
+								</div>
 							</div>
-						</div>
+						)}
+
+						{/* Lyrics / Karaoke Mode */}
+						{widgetStyle === "lyrics" && (
+							<div className="flex flex-col h-full justify-between">
+								<div className="flex items-center gap-2 pr-20">
+									<div className="size-6 shrink-0 rounded-md overflow-hidden ring-1 ring-border/50">
+										{artSrc ? (
+											<img src={artSrc} alt="" className="size-full object-cover pointer-events-none" />
+										) : (
+											<div className="size-full bg-muted flex items-center justify-center text-[8px]">YTM</div>
+										)}
+									</div>
+									<div className="min-w-0 flex-1 truncate text-xs font-medium">
+										<span className="text-foreground font-semibold">{title}</span>
+										{artist ? <span className="text-muted-foreground ml-1">· {artist}</span> : null}
+									</div>
+								</div>
+
+								<div className="my-auto flex flex-col items-center justify-center text-center px-2 py-1 select-none">
+									{currentLine ? (
+										<>
+											<p className="w-full truncate text-[11px] font-normal text-muted-foreground/50 transition-all duration-200">
+												{prevLine ?? "..."}
+											</p>
+											<motion.p
+												key={currentLine}
+												initial={{ opacity: 0, y: 3, scale: 0.98 }}
+												animate={{ opacity: 1, y: 0, scale: 1 }}
+												transition={{ duration: 0.2 }}
+												className="w-full truncate text-sm font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.35)] py-1 tracking-wide"
+												style={displayAccent ? { color: displayAccent, textShadow: `0 0 10px ${displayAccent}60` } : undefined}
+											>
+												♪ {currentLine}
+											</motion.p>
+											<p className="w-full truncate text-[11px] font-normal text-muted-foreground/60 transition-all duration-200">
+												{nextLine ?? "..."}
+											</p>
+										</>
+									) : lyricsLoading ? (
+										<div className="flex items-center gap-2 text-xs text-muted-foreground/70 italic py-2">
+											<Spinner className="size-3" />
+											<span>Đang tìm lời bài hát…</span>
+										</div>
+									) : (
+										<div className="text-center py-2">
+											<p className="text-xs font-semibold text-foreground/80">{title}</p>
+											<p className="text-[11px] text-muted-foreground/60 mt-0.5">Không tìm thấy lời bài hát</p>
+										</div>
+									)}
+								</div>
+
+								<div>
+									<TrayProgressBar
+										time={time}
+										durationSec={durationSec}
+										displayAccent={displayAccent}
+										disabled={trackBusy || !track}
+										onSeek={handleSeek}
+										compact
+									/>
+									<div className="flex justify-center pt-1 pb-1">
+										<TrayTransportDock
+											playing={playing}
+											trackBusy={trackBusy}
+											disabled={!track}
+											hasLike={hasLike}
+											hasDislike={hasDislike}
+											liked={playState?.liked}
+											disliked={playState?.disliked}
+											displayAccent={displayAccent}
+											onPlayPause={() => void (!playing ? play() : pause())}
+											onPrev={handlePrev}
+											onNext={handleNext}
+											onLike={likeToggle}
+											onDislike={dislikeToggle}
+										/>
+									</div>
+								</div>
+							</div>
+						)}
+
+						{/* Vinyl Record Player Mode */}
+						{widgetStyle === "vinyl" && (
+							<div className="flex items-center gap-3 h-full">
+								<VinylDisc artSrc={artSrc} playing={playing} displayAccent={displayAccent} />
+
+								<div className="min-w-0 flex-1 flex flex-col justify-between h-full py-0.5 pr-14">
+									<div>
+										<p className="truncate text-base font-semibold leading-tight">{title}</p>
+										{artist ? <p className="truncate text-xs text-muted-foreground mt-0.5">{artist}</p> : null}
+										{currentLine ? (
+											<p className="mt-1 truncate text-xs font-medium text-emerald-400 flex items-center gap-1">
+												<span>♪</span>
+												<span className="truncate">{currentLine}</span>
+											</p>
+										) : null}
+									</div>
+
+									<TrayProgressBar
+										time={time}
+										durationSec={durationSec}
+										displayAccent={displayAccent}
+										disabled={trackBusy || !track}
+										onSeek={handleSeek}
+										compact
+									/>
+
+									<div className="flex items-center justify-start gap-2 pt-1">
+										<TrayTransportDock
+											playing={playing}
+											trackBusy={trackBusy}
+											disabled={!track}
+											hasLike={hasLike}
+											hasDislike={false}
+											liked={playState?.liked}
+											displayAccent={displayAccent}
+											onPlayPause={() => void (!playing ? play() : pause())}
+											onPrev={handlePrev}
+											onNext={handleNext}
+											onLike={likeToggle}
+										/>
+									</div>
+								</div>
+							</div>
+						)}
+
+						{/* Default Mode */}
+						{(widgetStyle === "default" || !widgetStyle) && (
+							<div className="flex flex-col h-full justify-between">
+								<div className="flex items-start gap-2.5 pr-16">
+									<TrayCoverArt src={artSrc} />
+
+									<div className="min-w-0 flex-1 pt-0.5">
+										<p className="truncate text-base leading-tight font-semibold">{title}</p>
+										{artist ? <p className="mt-0.5 truncate text-sm text-muted-foreground">{artist}</p> : null}
+										{currentLine ? (
+											<p className="mt-1 truncate text-xs font-semibold text-emerald-400 flex items-center gap-1.5 drop-shadow-sm">
+												<span className="shrink-0 text-[11px]">♪</span>
+												<span className="truncate">{currentLine}</span>
+											</p>
+										) : lyricsLoading ? (
+											<p className="mt-1 truncate text-[11px] text-muted-foreground/60 italic flex items-center gap-1">
+												<span className="shrink-0 text-[10px]">♪</span>
+												<span>Đang tìm lời bài hát…</span>
+											</p>
+										) : null}
+									</div>
+								</div>
+
+								<TrayProgressBar
+									time={time}
+									durationSec={durationSec}
+									displayAccent={displayAccent}
+									disabled={trackBusy || !track}
+									onSeek={handleSeek}
+								/>
+
+								<div className="flex justify-center pt-2">
+									<TrayTransportDock
+										playing={playing}
+										trackBusy={trackBusy}
+										disabled={!track}
+										hasLike={hasLike}
+										hasDislike={hasDislike}
+										liked={playState?.liked}
+										disliked={playState?.disliked}
+										displayAccent={displayAccent}
+										onPlayPause={() => void (!playing ? play() : pause())}
+										onPrev={handlePrev}
+										onNext={handleNext}
+										onLike={likeToggle}
+										onDislike={dislikeToggle}
+									/>
+								</div>
+							</div>
+						)}
 					</div>
 
 					{/* Control center column */}
-					<div className="relative z-10 flex w-12 shrink-0 flex-col items-center justify-center gap-1.5 border-l border-border/60 bg-background/40 px-1.5 py-2 backdrop-blur-sm">
+					<div
+						className={cn(
+							"relative z-10 flex w-12 shrink-0 flex-col items-center justify-center gap-1.5 border-l border-border/60 bg-background/40 px-1.5 py-2 backdrop-blur-sm",
+							"transition-all duration-200 ease-out",
+							autoHideControls && !contentHovered && "opacity-0 pointer-events-none translate-x-2",
+						)}
+					>
 						<Tooltip>
 							<TooltipTrigger
 								render={
