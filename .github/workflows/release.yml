@@ -18,6 +18,7 @@ permissions:
 env:
   NODE_VERSION: "24.14.0"
   COMPILE_ARTIFACT: electron-compile
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # Shared electron-vite build (sidecar builds world0 + embeds).
