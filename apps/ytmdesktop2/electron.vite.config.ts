@@ -149,7 +149,7 @@ function sentryUploadPlugin(): PluginOption {
 		return;
 	}
 	return sentryVitePlugin({
-		url: process.env.SENTRY_URL || "https://sentry.venipa.net",
+		url: process.env.SENTRY_URL,
 		org,
 		project,
 		authToken,

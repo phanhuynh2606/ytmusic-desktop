@@ -2,7 +2,7 @@ import { createFetch } from "@better-fetch/fetch";
 import { createHash } from "crypto";
 
 const API_ROOT = "https://ws.audioscrobbler.com/2.0";
-const USER_AGENT = "ytmd (github.com/Venipa/ytmdesktop2)";
+const USER_AGENT = "ytmd (github.com/phanhuynh2606/ytmusic-desktop)";
 
 const lastfmFetch = createFetch({
 	baseURL: API_ROOT,

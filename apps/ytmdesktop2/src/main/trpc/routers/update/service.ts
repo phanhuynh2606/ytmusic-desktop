@@ -22,7 +22,7 @@ import semver from "semver";
 
 const UPDATE_CHECK_INTERVAL_MS = 1000 * 60 * 15;
 const GITHUB_FEED = (() => {
-	const [owner, repo] = String(import.meta.env.VITE_GITHUB_REPOSITORY ?? "").split("/", 2);
+	const [owner, repo] = String(import.meta.env.VITE_GITHUB_REPOSITORY || "phanhuynh2606/ytmusic-desktop").split("/", 2);
 	return { owner, repo };
 })();
 

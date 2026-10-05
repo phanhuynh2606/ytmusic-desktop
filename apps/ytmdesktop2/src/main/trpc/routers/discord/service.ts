@@ -8,7 +8,7 @@ import translations from "@translations/index";
 import { type App } from "electron";
 import { debounce } from "lodash-es";
 
-const CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID;
+const CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID || "1556505501368590359";
 const DISCORD_AVAILABLE = !!CLIENT_ID;
 const CONNECT_RETRY_MS = 5_000;
 const MAX_CONNECTION_RETRIES = 30;

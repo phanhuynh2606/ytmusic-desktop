@@ -50,8 +50,8 @@ exports.default = async function beforePack(context) {
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>CC0-1.0</project_license>
   <url type="homepage">https://youtube-music.app</url>
-  <url type="bugtracker">https://github.com/Venipa/ytmdesktop2/issues</url>
-  <url type="vcs-browser">https://github.com/Venipa/ytmdesktop2</url>
+  <url type="bugtracker">https://github.com/phanhuynh2606/ytmusic-desktop/issues</url>
+  <url type="vcs-browser">https://github.com/phanhuynh2606/ytmusic-desktop</url>
   <description>
     <p>${DESCRIPTION}</p>
   </description>

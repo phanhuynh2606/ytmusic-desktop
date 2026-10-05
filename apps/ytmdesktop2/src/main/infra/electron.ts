@@ -15,6 +15,10 @@ export function initializeCustomElectronEnvironment() {
 		process.exit(0);
 	}
 
+	if (process.platform === "win32") {
+		app.setAppUserModelId("net.venipa.ytmdesktop");
+	}
+	app.name = "Music Desktop App";
 
 	// Optimize CPU, RAM and Audio Process
 	app.commandLine.appendSwitch("disk-cache-size", "33554432");
