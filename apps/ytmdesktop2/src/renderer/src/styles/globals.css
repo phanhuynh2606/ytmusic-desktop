@@ -57,7 +57,8 @@
 	}
 
 	html.translucent,
-	html.translucent body {
+	html.translucent body,
+	html.translucent #app {
 		@apply bg-transparent;
 	}
   * {

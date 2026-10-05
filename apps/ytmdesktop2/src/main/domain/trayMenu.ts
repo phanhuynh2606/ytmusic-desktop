@@ -205,6 +205,31 @@ export const createTrayMenu = (provider: BaseProvider) => {
 			},
 		},
 		{
+			type: "submenu",
+			label: "Lời bài hát nổi (Floating Lyrics)",
+			submenu: [
+				{
+					label: "Bật / Tắt lời bài hát nổi",
+					type: "checkbox",
+					checked: !!sp.floatingLyrics?.enabled,
+					click: () => {
+						const fl = (provider.getProvider as any)("floatingLyrics");
+						void fl?.toggle();
+					},
+				},
+				{
+					label: "Khóa vị trí (Xuyên chuột / Click-through)",
+					type: "checkbox",
+					enabled: !!sp.floatingLyrics?.enabled,
+					checked: !!sp.floatingLyrics?.locked,
+					click: (item) => {
+						const fl = (provider.getProvider as any)("floatingLyrics");
+						void fl?.setLocked(item.checked);
+					},
+				},
+			],
+		},
+		{
 			type: "separator",
 		},
 		{

@@ -11,6 +11,7 @@ import {
 	RiGlobalLine,
 	RiInformationLine,
 	RiKey2Line,
+	RiKeyboardLine,
 	RiLiveLine,
 	RiMusic2Line,
 	RiPaletteLine,
@@ -58,6 +59,7 @@ const socials = [
 
 type SettingsTabTo =
 	| "/"
+	| "/shortcuts"
 	| "/discord"
 	| "/lastfm"
 	| "/about"
@@ -262,6 +264,7 @@ function SettingsLayout() {
 							<SidebarGroupContent>
 								<SidebarMenu className="flex flex-col gap-1">
 									<SettingsNavItem to="/" label={t.sidebar.generic} icon={RiSettings3Line} />
+									<SettingsNavItem to="/shortcuts" label="Phím tắt toàn cục" icon={RiKeyboardLine} />
 									<PlayerNav />
 									<AppearanceNav />
 									<SettingsNavItem to="/discord" label={t.sidebar.discord} icon={RiDiscordLine} />

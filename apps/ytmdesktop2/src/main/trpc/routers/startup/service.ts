@@ -80,6 +80,16 @@ export default class StartupProvider extends BaseProvider implements AfterInit, 
 		});
 		const app = this.settingsInstance.instance.app;
 		if (isProduction) {
+			if (platform.isWindows) {
+				// Clean up legacy startup registry keys from previous releases or renames
+				void import("node:child_process").then(({ exec }) => {
+					for (const key of ["electron.app.YouTube Music for Desktop", "net.venipa.ytmdesktop"]) {
+						exec(`reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "${key}" /f`, () => {});
+						exec(`reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run" /v "${key}" /f`, () => {});
+					}
+				});
+			}
+
 			if (app.autostart) {
 				this.app.setLoginItemSettings({
 					openAtLogin: true,

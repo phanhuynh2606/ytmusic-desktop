@@ -101,6 +101,36 @@ const defaultSettings = {
 		enabled: true,
 		blockedTotal: 0,
 	},
+	floatingLyrics: {
+		enabled: false,
+		locked: false,
+		fontSize: 22,
+		textColor: "accent" as "accent" | "white" | "gold" | "cyan" | "green",
+		backgroundOpacity: 25,
+		align: "center" as "center" | "left",
+		x: null as number | null,
+		y: null as number | null,
+		width: 720,
+		height: 130,
+	},
+	shortcuts: {
+		enabled: true,
+		bindings: {
+			playPause: "Shift+Alt+Space",
+			next: "Shift+Alt+Right",
+			prev: "Shift+Alt+Left",
+			volumeUp: "Shift+Alt+Up",
+			volumeDown: "Shift+Alt+Down",
+			mute: "Shift+Alt+M",
+			like: "Shift+Alt+L",
+			toggleFloatingLyrics: "Shift+Alt+K",
+		},
+	},
+	equalizer: {
+		enabled: false,
+		preset: "flat",
+		gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] as number[],
+	},
 };
 
 export type SettingsStore = typeof defaultSettings & {

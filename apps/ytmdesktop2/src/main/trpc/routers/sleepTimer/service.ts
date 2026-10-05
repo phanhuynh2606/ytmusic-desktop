@@ -1,3 +1,4 @@
+import { exec } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { AfterInit, BaseProvider, OnDestroy } from "@main/core/baseProvider";
 import { serverMain } from "@main/ipc/serverEvents";
@@ -6,14 +7,49 @@ import { trackService } from "@main/trpc/routers/track";
 import { createAppWindow } from "@main/windows/windowUtils";
 import type { App, BrowserWindow } from "electron";
 
+export type SleepTimerMode = "pause" | "quit" | "lock" | "sleep" | "shutdown";
+
 export interface SleepTimerState {
 	active: boolean;
-	mode: "pause" | "quit";
+	mode: SleepTimerMode;
 	targetDurationMinutes: number | null;
 	endAtTimestamp: number | null;
 	remainingSeconds: number;
 	trackEnd: boolean;
 	targetTrackId: string | null;
+}
+
+function executeSystemAction(
+	action: "lock" | "sleep" | "shutdown",
+	logger: { error: (...args: any[]) => void; info: (...args: any[]) => void },
+) {
+	const isWin = process.platform === "win32";
+	const isMac = process.platform === "darwin";
+
+	let command = "";
+	if (action === "lock") {
+		if (isWin) command = "rundll32.exe user32.dll,LockWorkStation";
+		else if (isMac) command = "/System/Library/CoreServices/Menu\\ Extras/User.menu/Contents/Resources/CGSession -suspend";
+		else command = "loginctl lock-session || xdg-screensaver lock";
+	} else if (action === "sleep") {
+		if (isWin) command = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0";
+		else if (isMac) command = "pmset sleepnow";
+		else command = "systemctl suspend";
+	} else if (action === "shutdown") {
+		if (isWin) command = 'shutdown /s /t 10 /c "YouTube Music: Hẹn giờ tắt máy tính"';
+		else if (isMac) command = "osascript -e 'tell app \"System Events\" to shut down'";
+		else command = "systemctl poweroff";
+	}
+
+	if (!command) return;
+
+	exec(command, (err, stdout, stderr) => {
+		if (err) {
+			logger.error(`Failed to execute system action ${action}:`, err, stderr);
+		} else {
+			logger.info(`Successfully triggered system action ${action}:`, stdout);
+		}
+	});
 }
 
 const DEFAULT_STATE: SleepTimerState = {
@@ -48,12 +84,12 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 		this.dialogWindow = await createAppWindow({
 			path: "/sleeptimer",
 			parent: mainWindow ?? undefined,
-			width: 350,
-			height: 470,
-			minWidth: 350,
-			minHeight: 470,
-			maxWidth: 350,
-			maxHeight: 470,
+			width: 360,
+			height: 530,
+			minWidth: 360,
+			minHeight: 530,
+			maxWidth: 360,
+			maxHeight: 530,
 			show: true,
 			showTaskBar: false,
 			minimizeable: false,
@@ -87,7 +123,7 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 		return { ...this.state };
 	}
 
-	setMode(mode: "pause" | "quit"): SleepTimerState {
+	setMode(mode: SleepTimerMode): SleepTimerState {
 		this.state.mode = mode;
 		this.broadcastState();
 		return this.getState();
@@ -106,7 +142,7 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 		serverMain.emit("sleepTimer.state", null, currentState);
 	}
 
-	setTimer(options: { durationMinutes?: number; trackEnd?: boolean; mode?: "pause" | "quit" }): SleepTimerState {
+	setTimer(options: { durationMinutes?: number; trackEnd?: boolean; mode?: SleepTimerMode }): SleepTimerState {
 		this.cancelTimer();
 
 		const mode = options.mode ?? "pause";
@@ -238,17 +274,20 @@ export default class SleepTimerProvider extends BaseProvider implements AfterIni
 		const targetMode = this.state.mode;
 		this.cancelTimer();
 
+		this.logger.info("Sleep timer executed: pausing track playback");
+		try {
+			await trackService.pauseTrack();
+		} catch (err) {
+			this.logger.error("Failed to pause track on sleep timer", err);
+		}
+
 		if (targetMode === "quit") {
 			this.logger.info("Sleep timer executed: force quitting application");
 			// Gửi forceQuit = true để vượt qua bộ chặn minimize-to-tray
 			serverMain.emit("app.quit", null, true);
-		} else {
-			this.logger.info("Sleep timer executed: pausing track playback");
-			try {
-				await trackService.pauseTrack();
-			} catch (err) {
-				this.logger.error("Failed to pause track on sleep timer", err);
-			}
+		} else if (targetMode === "lock" || targetMode === "sleep" || targetMode === "shutdown") {
+			this.logger.info(`Sleep timer executed: triggering system action ${targetMode}`);
+			executeSystemAction(targetMode, this.logger);
 		}
 	}
 }
