@@ -128,3 +128,45 @@ pnpm run release:pack:win
 ```
 
 *File sau khi đóng gói sẽ nằm trong thư mục `apps/ytmdesktop2/dist/`.*
+
+---
+
+## 6. Quy Trình Cập Nhật & Đánh Tag Phát Hành (Release & Update Workflow)
+
+### 6.1. Tại sao chỉ push code thì app không tự cập nhật?
+* **Mã nguồn trên Git (`.ts`, `.tsx`, `.json`)** là mã chưa biên dịch dành cho lập trình viên.
+* **Ứng dụng trên máy người dùng** là file nhị phân đã đóng gói (`.exe`).
+* Bộ cập nhật tự động (`electron-updater`) bên trong app **không đọc mã nguồn Git**, mà nó định kỳ kiểm tra: *"Trên GitHub Releases đã có file cài đặt `.exe` mang số phiên bản cao hơn phiên bản hiện tại trên máy hay chưa?"*
+* **Lý do an toàn:** Nếu chỉ cần `git push` mà app tự cập nhật ngay, những lúc bạn đang code dở hoặc code chưa test có lỗi (bug) sẽ lập tức làm sập ứng dụng của toàn bộ người dùng. Vì vậy, mọi dự án phần mềm chuẩn đều tách biệt:
+  * **Code thường ngày:** Commit và push lên nhánh `main` thoải mái, không ảnh hưởng người dùng.
+  * **Phát hành chính thức (Release):** Đánh Tag phiên bản mới khi mọi thứ đã ổn định.
+
+### 6.2. Khi nào thì nên đánh Tag?
+Bạn chỉ cần đánh Tag khi:
+1. Bạn đã kiểm tra tính năng/sửa lỗi chạy tốt và **thực sự muốn người dùng nhận được bản cập nhật mới**.
+2. **Quy tắc tăng số phiên bản (SemVer: `vX.Y.Z`):**
+   * **Tăng số `Z` (Patch - sửa lỗi):** Khi sửa bug nhỏ, vá lỗi (ví dụ: `v1.9.0` ➔ `v1.9.1`).
+   * **Tăng số `Y` (Minor - tính năng mới):** Khi bổ sung thêm tính năng mới (ví dụ: `v1.9.1` ➔ `v1.10.0`).
+   * **Tăng số `X` (Major - thay đổi lớn):** Khi đại tu toàn bộ giao diện hoặc thay đổi kiến trúc lớn (ví dụ: `v1.10.0` ➔ `v2.0.0`).
+
+### 6.3. Các bước đánh Tag phát hành bản mới:
+Mỗi khi muốn tung ra bản cập nhật mới, bạn chỉ cần thực hiện 3 bước:
+
+```bash
+# Bước 1: Nâng số version trong 2 file package.json (root và apps/ytmdesktop2/package.json)
+# (Ví dụ nâng từ 1.9.1 lên 1.9.2)
+
+# Bước 2: Commit và push mã nguồn lên nhánh main
+git add .
+git commit -m "chore: bump version to 1.9.2"
+git push origin main
+
+# Bước 3: Tạo Tag và push Tag lên GitHub
+git tag v1.9.2
+git push origin v1.9.2
+```
+
+👉 **Ngay khi bạn push Tag, GitHub Actions sẽ tự động:**
+* Biên dịch source code và đóng gói file `.exe` Windows.
+* Tự động tạo bản **Release `v1.9.2` chính thức** trên GitHub.
+* Người dùng khi mở app trên máy sẽ nhận được thông báo: *"Đã có bản cập nhật mới v1.9.2"* và app tự tải về cài đặt.
