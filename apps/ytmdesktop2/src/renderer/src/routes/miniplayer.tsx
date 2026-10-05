@@ -260,24 +260,30 @@ function MiniPlayerPage() {
 		};
 	}, [thumbnail, utils.track.accent]);
 
+	const rawTitle = track?.video?.title;
+	const rawAuthor = track?.video?.author;
+
 	// Fetch lyrics when track changes
 	const videoId = track?.video?.videoId;
 	useEffect(() => {
-		if (!track?.video?.title) {
+		if (!rawTitle) {
 			setLrcLines([]);
+			lastFetchedIdRef.current = null;
 			return;
 		}
-		if (lastFetchedIdRef.current === videoId && lrcLines.length > 0) {
+		if (lastFetchedIdRef.current === videoId && videoId) {
 			return;
 		}
 		lastFetchedIdRef.current = videoId ?? null;
-
-		let cancelled = false;
+		setLrcLines([]);
 		setLyricsLoading(true);
 
+		let cancelled = false;
+
+		const cleanTitle = rawTitle.replace(/[\(\[][^\)\]]*(official|video|mv|audio|lyrics?)[^\)\]]*[\)\]]/gi, "").trim() || rawTitle;
 		const searchParams = new URLSearchParams({
-			track_name: track.video.title,
-			artist_name: track.video.author || "",
+			track_name: cleanTitle,
+			artist_name: rawAuthor || "",
 		});
 		if (duration > 0) {
 			searchParams.set("duration", String(Math.round(duration)));
@@ -286,7 +292,7 @@ function MiniPlayerPage() {
 		fetch(`https://lrclib.net/api/get?${searchParams.toString()}`)
 			.then(async (res) => {
 				if (!res.ok) {
-					const fallbackRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(`${track.video.title} ${track.video.author || ""}`)}`);
+					const fallbackRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${rawAuthor || ""}`)}`);
 					if (!fallbackRes.ok) return null;
 					const hits = await fallbackRes.json();
 					return Array.isArray(hits) && hits.length > 0 ? hits[0] : null;
@@ -314,13 +320,16 @@ function MiniPlayerPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [videoId, track?.video?.title, track?.video?.author, duration]);
+	}, [videoId, rawTitle, rawAuthor]);
 
 	// Current lyric line
 	const currentLine = useMemo(() => {
 		if (!lrcLines.length) return null;
 		const curMs = progress * 1000;
-		let line = lrcLines[0];
+		if (lrcLines[0] && curMs + 200 < lrcLines[0].timeMs) {
+			return null;
+		}
+		let line: LrcLine | null = null;
 		for (let i = 0; i < lrcLines.length; i++) {
 			if (lrcLines[i].timeMs <= curMs + 200) {
 				line = lrcLines[i];

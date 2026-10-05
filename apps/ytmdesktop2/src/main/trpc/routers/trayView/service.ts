@@ -11,12 +11,16 @@ import { debounce } from "lodash-es";
 
 const TRAY_VIEW_WIDTH = 420;
 const TRAY_VIEW_HEIGHT = 180;
+const TRAY_VIEW_MIN_WIDTH = 340;
+const TRAY_VIEW_MIN_HEIGHT = 140;
+const TRAY_VIEW_MAX_WIDTH = 900;
+const TRAY_VIEW_MAX_HEIGHT = 500;
 
-function clampToVisibleWorkArea(x: number, y: number): { x: number; y: number } {
+function clampToVisibleWorkArea(x: number, y: number, width: number = TRAY_VIEW_WIDTH, height: number = TRAY_VIEW_HEIGHT): { x: number; y: number } {
 	const b = screen.getDisplayNearestPoint({ x, y }).workArea;
 	return {
-		x: Math.round(Math.min(Math.max(x, b.x), b.x + b.width - TRAY_VIEW_WIDTH)),
-		y: Math.round(Math.min(Math.max(y, b.y), b.y + b.height - TRAY_VIEW_HEIGHT)),
+		x: Math.round(Math.min(Math.max(x, b.x), b.x + b.width - width)),
+		y: Math.round(Math.min(Math.max(y, b.y), b.y + b.height - height)),
 	};
 }
 
@@ -26,7 +30,7 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 	private _suppressBlurUntil = 0;
 	private _pinned = false;
 	private _saveWindowState: (() => void) | null = null;
-	private _restoredBounds: { x: number; y: number } | null = null;
+	private _restoredBounds: { x: number; y: number; width?: number; height?: number } | null = null;
 	private persistMoved = debounce(() => this._saveWindowState?.(), 250);
 	private _settingsWired = false;
 
@@ -93,9 +97,10 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 
 	private dockToTray(win: BrowserWindow) {
 		const tray = this.trayProvider?.Tray;
+		const bounds = win.getBounds();
 		positionNearTray(win, tray && !tray.isDestroyed() ? tray : null, {
-			width: TRAY_VIEW_WIDTH,
-			height: TRAY_VIEW_HEIGHT,
+			width: bounds.width || TRAY_VIEW_WIDTH,
+			height: bounds.height || TRAY_VIEW_HEIGHT,
 		});
 	}
 
@@ -109,10 +114,10 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 				path: "/trayview",
 				width: TRAY_VIEW_WIDTH,
 				height: TRAY_VIEW_HEIGHT,
-				minWidth: TRAY_VIEW_WIDTH,
-				minHeight: TRAY_VIEW_HEIGHT,
-				maxWidth: TRAY_VIEW_WIDTH,
-				maxHeight: TRAY_VIEW_HEIGHT,
+				minWidth: TRAY_VIEW_MIN_WIDTH,
+				minHeight: TRAY_VIEW_MIN_HEIGHT,
+				maxWidth: TRAY_VIEW_MAX_WIDTH,
+				maxHeight: TRAY_VIEW_MAX_HEIGHT,
 				show: false,
 				showTaskBar: false,
 				minimizeable: false,
@@ -121,7 +126,7 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 				...(platform.isMacOS ? { type: "panel" as const } : {}),
 			});
 
-			win.setResizable(false);
+			win.setResizable(true);
 			win.setMinimizable(false);
 			win.setMaximizable(false);
 			win.webContents.setBackgroundThrottling(false);
@@ -133,12 +138,19 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 			});
 			this._saveWindowState = saveState;
 			if (restored && typeof state?.x === "number" && typeof state?.y === "number") {
-				this._restoredBounds = { x: state.x, y: state.y };
+				this._restoredBounds = {
+					x: state.x,
+					y: state.y,
+					width: typeof state?.width === "number" ? state.width : TRAY_VIEW_WIDTH,
+					height: typeof state?.height === "number" ? state.height : TRAY_VIEW_HEIGHT,
+				};
 			}
 
 			this.applyPinFlags(win);
 			win.on("move", () => this.persistMoved());
 			win.on("moved", () => this.persistMoved());
+			win.on("resize", () => this.persistMoved());
+			win.on("resized", () => this.persistMoved());
 
 			const dismiss = () => {
 				if (this._pinned) return;
@@ -225,9 +237,11 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 			this.dockToTray(win);
 			return;
 		}
-		const pos = clampToVisibleWorkArea(this._restoredBounds.x, this._restoredBounds.y);
-		this._restoredBounds = pos;
-		win.setPosition(pos.x, pos.y);
+		const width = this._restoredBounds.width ?? win.getBounds().width;
+		const height = this._restoredBounds.height ?? win.getBounds().height;
+		const pos = clampToVisibleWorkArea(this._restoredBounds.x, this._restoredBounds.y, width, height);
+		this._restoredBounds = { ...pos, width, height };
+		win.setBounds({ ...pos, width, height });
 	}
 
 	private present(win: BrowserWindow) {
