@@ -121,6 +121,7 @@ function FloatingLyricsPage() {
 		if (!rawTitle) {
 			setLrcLines([]);
 			lastFetchedIdRef.current = null;
+			setLyricsLoading(false);
 			return;
 		}
 		if (lastFetchedIdRef.current === videoId && videoId) {
@@ -131,11 +132,9 @@ function FloatingLyricsPage() {
 		setLyricsLoading(true);
 
 		let cancelled = false;
-		const abortController = new AbortController();
-		const timeoutId = setTimeout(() => abortController.abort(), 6000);
 
 		const cleanTitle =
-			rawTitle.replace(/[\(\[][^\)\]]*(official|video|mv|audio|lyrics?)[^\)\]]*[\)\]]/gi, "").trim() || rawTitle;
+			rawTitle.replace(/[\(\[][^\)\]]*(official|video|mv|audio|lyrics?|remix|hd|4k)[^\)\]]*[\)\]]/gi, "").trim() || rawTitle;
 		const searchParams = new URLSearchParams({
 			track_name: cleanTitle,
 			artist_name: rawAuthor || "",
@@ -144,20 +143,40 @@ function FloatingLyricsPage() {
 			searchParams.set("duration", String(Math.round(duration)));
 		}
 
-		fetch(`https://lrclib.net/api/get?${searchParams.toString()}`, { signal: abortController.signal })
-			.then(async (res) => {
-				if (!res.ok) {
+		const fetchLyrics = async () => {
+			try {
+				let data: any = null;
+				const res = await fetch(`https://lrclib.net/api/get?${searchParams.toString()}`);
+				if (res.ok) {
+					data = await res.json();
+				} else {
+					// Fallback 1: search with title and artist
 					const fallbackRes = await fetch(
 						`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${rawAuthor || ""}`)}`,
-						{ signal: abortController.signal },
 					);
-					if (!fallbackRes.ok) return null;
-					const hits = await fallbackRes.json();
-					return Array.isArray(hits) && hits.length > 0 ? hits[0] : null;
+					if (fallbackRes.ok) {
+						const hits = await fallbackRes.json();
+						if (Array.isArray(hits) && hits.length > 0) {
+							data = hits.find((h: any) => h.syncedLyrics) || hits[0];
+						}
+					}
+					// Fallback 2: search with title only if still no syncedLyrics
+					if (!data?.syncedLyrics) {
+						const fallbackTitleOnly = await fetch(
+							`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`,
+						);
+						if (fallbackTitleOnly.ok) {
+							const hits = await fallbackTitleOnly.json();
+							if (Array.isArray(hits) && hits.length > 0) {
+								const best = hits.find((h: any) => h.syncedLyrics) || hits[0];
+								if (best?.syncedLyrics || !data) {
+									data = best;
+								}
+							}
+						}
+					}
 				}
-				return res.json();
-			})
-			.then((data) => {
+
 				if (cancelled) return;
 				if (data?.syncedLyrics) {
 					setLrcLines(parseLrc(data.syncedLyrics));
@@ -167,21 +186,19 @@ function FloatingLyricsPage() {
 				} else {
 					setLrcLines([]);
 				}
-			})
-			.catch(() => {
+			} catch {
 				if (!cancelled) setLrcLines([]);
-			})
-			.finally(() => {
-				clearTimeout(timeoutId);
+			} finally {
 				if (!cancelled) setLyricsLoading(false);
-			});
+			}
+		};
+
+		void fetchLyrics();
 
 		return () => {
 			cancelled = true;
-			clearTimeout(timeoutId);
-			abortController.abort();
 		};
-	}, [rawTitle, rawAuthor, videoId, duration]);
+	}, [videoId, rawTitle, rawAuthor]);
 
 	// Find current line index
 	const currentIndex = useMemo(() => {
@@ -381,7 +398,11 @@ function FloatingLyricsPage() {
 						</div>
 					) : lyricsLoading ? (
 						<div className="text-[12px] text-neutral-500 italic">Đang tải lời bài hát...</div>
-					) : null}
+					) : lrcLines.length > 0 ? (
+						<div className="text-[12px] text-neutral-500/70 italic">♪ Nhạc dạo...</div>
+					) : (
+						<div className="text-[11px] text-neutral-500/60">Không tìm thấy lời bài hát</div>
+					)}
 				</div>
 			</div>
 		</div>

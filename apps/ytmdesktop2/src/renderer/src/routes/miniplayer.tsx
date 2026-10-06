@@ -293,9 +293,24 @@ function MiniPlayerPage() {
 			.then(async (res) => {
 				if (!res.ok) {
 					const fallbackRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${rawAuthor || ""}`)}`);
-					if (!fallbackRes.ok) return null;
-					const hits = await fallbackRes.json();
-					return Array.isArray(hits) && hits.length > 0 ? hits[0] : null;
+					let result = null;
+					if (fallbackRes.ok) {
+						const hits = await fallbackRes.json();
+						if (Array.isArray(hits) && hits.length > 0) {
+							result = hits.find((h: any) => h.syncedLyrics) || hits[0];
+						}
+					}
+					if (!result?.syncedLyrics) {
+						const titleOnlyRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`);
+						if (titleOnlyRes.ok) {
+							const hits = await titleOnlyRes.json();
+							if (Array.isArray(hits) && hits.length > 0) {
+								const best = hits.find((h: any) => h.syncedLyrics) || hits[0];
+								if (best?.syncedLyrics || !result) result = best;
+							}
+						}
+					}
+					return result;
 				}
 				return res.json();
 			})

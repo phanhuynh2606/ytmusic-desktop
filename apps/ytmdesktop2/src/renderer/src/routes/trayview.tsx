@@ -484,13 +484,13 @@ function CircleDiscWidget({
 	onSettings,
 }: CircleDiscWidgetProps) {
 	return (
-		<div className="group drag relative size-full max-w-[174px] max-h-[174px] aspect-square flex items-center justify-center select-none">
+		<div className="group drag relative size-full aspect-square flex items-center justify-center select-none p-1">
 			{/* Outer Circular Progress Ring */}
-			<svg className="pointer-events-none absolute -inset-0.5 size-[calc(100%+4px)] -rotate-90 z-10" viewBox="0 0 100 100">
+			<svg className="pointer-events-none absolute inset-0 size-full -rotate-90 z-10" viewBox="0 0 100 100">
 				<circle
 					cx="50"
 					cy="50"
-					r="48"
+					r="48.5"
 					stroke="rgba(255,255,255,0.12)"
 					strokeWidth="2.5"
 					fill="none"
@@ -498,7 +498,7 @@ function CircleDiscWidget({
 				<circle
 					cx="50"
 					cy="50"
-					r="48"
+					r="48.5"
 					stroke={displayAccent ?? "var(--accent)"}
 					strokeWidth="2.5"
 					fill="none"
@@ -512,17 +512,16 @@ function CircleDiscWidget({
 
 			{/* Disc Core */}
 			<div
-				className="relative size-full rounded-full overflow-hidden shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing"
+				className="drag relative size-full rounded-full overflow-hidden shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing"
 				style={{
 					boxShadow: displayAccent
 						? `0 10px 32px -4px ${displayAccent}50, 0 4px 16px rgba(0,0,0,0.85)`
 						: "0 10px 32px -4px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.75)",
 				}}
-				onDoubleClick={onPlayPause}
 			>
 				{/* 360 Spin Animation */}
 				<motion.div
-					className="relative size-full rounded-full overflow-hidden flex items-center justify-center"
+					className="relative size-full rounded-full overflow-hidden flex items-center justify-center pointer-events-none"
 					animate={playing ? { rotate: 360 } : undefined}
 					transition={playing ? { repeat: Infinity, duration: 10, ease: "linear" } : undefined}
 				>
@@ -599,25 +598,34 @@ function CircleDiscWidget({
 			</div>
 
 			{/* Hover Action Overlay */}
-			<div className="no-drag pointer-events-none group-hover:pointer-events-auto absolute inset-0 rounded-full bg-black/75 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-between p-2.5 select-none z-20 shadow-2xl">
-				{/* Top Row: Switch Type, Pin, Settings */}
+			<div className="drag pointer-events-none group-hover:pointer-events-auto absolute inset-0 rounded-full bg-black/75 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-between p-2.5 sm:p-3 select-none z-20 shadow-2xl">
+				{/* Top Row: Switch Type, Drag Handle, Pin, Settings */}
 				<div className="flex items-center justify-between w-full px-1">
 					<button
 						type="button"
 						onClick={onToggleDiscType}
 						aria-label={discType === "vinyl" ? "Đổi sang Ảnh bìa tròn" : "Đổi sang Đĩa than cổ điển"}
-						className="size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
+						className="no-drag size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
 						title={discType === "vinyl" ? "Đổi sang Ảnh bìa tròn" : "Đổi sang Đĩa than cổ điển"}
 					>
 						{discType === "vinyl" ? <ImageIcon className="size-3.5" /> : <Disc3Icon className="size-3.5" />}
 					</button>
+
+					{/* Center Drag Grip Handle */}
+					<div
+						className="drag size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 flex items-center justify-center cursor-grab active:cursor-grabbing shadow-sm"
+						title="Kéo để di chuyển widget"
+					>
+						<GripVerticalIcon className="size-3.5" />
+					</div>
+
 					<div className="flex items-center gap-1">
 						<button
 							type="button"
 							onClick={onPinToggle}
 							aria-label={pinned ? "Bỏ ghim" : "Ghim"}
 							className={cn(
-								"size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm",
+								"no-drag size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm",
 								pinned && "text-accent bg-accent/25",
 							)}
 							title={pinned ? "Bỏ ghim" : "Ghim"}
@@ -628,7 +636,7 @@ function CircleDiscWidget({
 							type="button"
 							onClick={onSettings}
 							aria-label="Cài đặt"
-							className="size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
+							className="no-drag size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
 							title="Cài đặt"
 						>
 							<SettingsIcon className="size-3" />
@@ -637,12 +645,12 @@ function CircleDiscWidget({
 				</div>
 
 				{/* Center Row: Controls */}
-				<div className="flex items-center justify-center gap-2">
+				<div className="no-drag flex items-center justify-center gap-2">
 					<button
 						type="button"
 						onClick={onPrev}
 						aria-label="Bài trước"
-						className="size-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+						className="no-drag size-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
 						title="Bài trước"
 					>
 						<PrevIcon className="size-3.5" />
@@ -651,7 +659,7 @@ function CircleDiscWidget({
 						type="button"
 						onClick={onPlayPause}
 						aria-label={playing ? "Tạm dừng" : "Phát"}
-						className="size-10 rounded-full bg-primary hover:scale-105 active:scale-95 text-primary-foreground shadow-lg flex items-center justify-center transition-transform cursor-pointer"
+						className="no-drag size-10 rounded-full bg-primary hover:scale-105 active:scale-95 text-primary-foreground shadow-lg flex items-center justify-center transition-transform cursor-pointer"
 						title={playing ? "Tạm dừng" : "Phát"}
 						style={displayAccent ? { backgroundColor: displayAccent } : undefined}
 					>
@@ -661,7 +669,7 @@ function CircleDiscWidget({
 						type="button"
 						onClick={onNext}
 						aria-label="Bài tiếp theo"
-						className="size-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+						className="no-drag size-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
 						title="Bài tiếp theo"
 					>
 						<NextIcon className="size-3.5" />
@@ -669,7 +677,7 @@ function CircleDiscWidget({
 				</div>
 
 				{/* Bottom Row: Title + Time */}
-				<div className="flex flex-col items-center justify-center w-full px-2 text-center pb-0.5">
+				<div className="no-drag flex flex-col items-center justify-center w-full px-2 text-center pb-0.5">
 					<p className="w-full truncate text-[10px] font-semibold text-white/95 leading-tight">{title}</p>
 					<p className="text-[9px] text-white/70 font-mono mt-0.5">{time ? `${time.current} / ${time.end}` : "--:--"}</p>
 				</div>
@@ -1032,9 +1040,26 @@ function TrayViewPage() {
 					const fallbackRes = await fetch(
 						`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${rawAuthor || ""}`)}`,
 					);
-					if (!fallbackRes.ok) return null;
-					const hits = await fallbackRes.json();
-					return Array.isArray(hits) && hits.length > 0 ? hits[0] : null;
+					let result = null;
+					if (fallbackRes.ok) {
+						const hits = await fallbackRes.json();
+						if (Array.isArray(hits) && hits.length > 0) {
+							result = hits.find((h: any) => h.syncedLyrics) || hits[0];
+						}
+					}
+					if (!result?.syncedLyrics) {
+						const titleOnlyRes = await fetch(
+							`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`,
+						);
+						if (titleOnlyRes.ok) {
+							const hits = await titleOnlyRes.json();
+							if (Array.isArray(hits) && hits.length > 0) {
+								const best = hits.find((h: any) => h.syncedLyrics) || hits[0];
+								if (best?.syncedLyrics || !result) result = best;
+							}
+						}
+					}
+					return result;
 				}
 				return res.json();
 			})
@@ -1187,7 +1212,7 @@ function TrayViewPage() {
 
 	if (widgetStyle === "circle") {
 		return (
-			<div className="absolute inset-0 flex items-center justify-center p-2 bg-transparent select-none overflow-hidden">
+			<div className="absolute inset-0 flex items-center justify-center p-1 bg-transparent select-none overflow-hidden">
 				<CircleDiscWidget
 					artSrc={artSrc}
 					playing={playing}

@@ -11,7 +11,7 @@ import { debounce } from "lodash-es";
 
 const TRAY_VIEW_WIDTH = 420;
 const TRAY_VIEW_HEIGHT = 180;
-const TRAY_VIEW_CIRCLE_SIZE = 190;
+const TRAY_VIEW_CIRCLE_SIZE = 200;
 const TRAY_VIEW_MIN_WIDTH = 140;
 const TRAY_VIEW_MIN_HEIGHT = 140;
 const TRAY_VIEW_MAX_WIDTH = 900;
@@ -61,10 +61,27 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 				if (!win || win.isDestroyed()) return;
 				const isCircle = value === "circle";
 				const bounds = win.getBounds();
-				if (isCircle && bounds.width > 220) {
-					win.setSize(TRAY_VIEW_CIRCLE_SIZE, TRAY_VIEW_CIRCLE_SIZE);
-				} else if (!isCircle && bounds.width < 300) {
-					win.setSize(TRAY_VIEW_WIDTH, TRAY_VIEW_HEIGHT);
+				const circleSize = (this.settings.get("trayView.circleSize", TRAY_VIEW_CIRCLE_SIZE) as number) || TRAY_VIEW_CIRCLE_SIZE;
+				if (isCircle) {
+					try {
+						win.setAspectRatio(1.0);
+					} catch {}
+					win.setSize(circleSize, circleSize);
+				} else {
+					try {
+						win.setAspectRatio(0);
+					} catch {}
+					if (bounds.width < 300) {
+						win.setSize(TRAY_VIEW_WIDTH, TRAY_VIEW_HEIGHT);
+					}
+				}
+			});
+			this.settings.onSettingChange("trayView.circleSize", (value) => {
+				const win = this.getWindow();
+				if (!win || win.isDestroyed()) return;
+				const isCircle = this.settings.get("trayView.widgetStyle", "default") === "circle";
+				if (isCircle && typeof value === "number") {
+					win.setSize(value, value);
 				}
 			});
 		}
@@ -124,8 +141,9 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 		this._ready = (async () => {
 			const currentStyle = (this.settings.get("trayView.widgetStyle", "default") as string) || "default";
 			const isCircle = currentStyle === "circle";
-			const initWidth = isCircle ? TRAY_VIEW_CIRCLE_SIZE : TRAY_VIEW_WIDTH;
-			const initHeight = isCircle ? TRAY_VIEW_CIRCLE_SIZE : TRAY_VIEW_HEIGHT;
+			const circleSize = (this.settings.get("trayView.circleSize", TRAY_VIEW_CIRCLE_SIZE) as number) || TRAY_VIEW_CIRCLE_SIZE;
+			const initWidth = isCircle ? circleSize : TRAY_VIEW_WIDTH;
+			const initHeight = isCircle ? circleSize : TRAY_VIEW_HEIGHT;
 
 			const win = await createAppWindow({
 				path: "/trayview",
@@ -148,6 +166,11 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 			win.setMinimizable(false);
 			win.setMaximizable(false);
 			win.webContents.setBackgroundThrottling(false);
+			if (isCircle) {
+				try {
+					win.setAspectRatio(1.0);
+				} catch {}
+			}
 
 			const { state, saveState, restored } = await wrapWindowHandler(win, "trayview", {
 				width: TRAY_VIEW_WIDTH,
@@ -167,7 +190,17 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 			this.applyPinFlags(win);
 			win.on("move", () => this.persistMoved());
 			win.on("moved", () => this.persistMoved());
-			win.on("resize", () => this.persistMoved());
+			win.on("resize", () => {
+				const style = (this.settings.get("trayView.widgetStyle", "default") as string) || "default";
+				if (style === "circle") {
+					const [w, h] = win.getSize();
+					if (Math.abs(w - h) > 4) {
+						const size = Math.round((w + h) / 2);
+						win.setSize(size, size);
+					}
+				}
+				this.persistMoved();
+			});
 			win.on("resized", () => this.persistMoved());
 
 			const dismiss = () => {
