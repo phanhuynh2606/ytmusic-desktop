@@ -11,7 +11,8 @@ import { debounce } from "lodash-es";
 
 const TRAY_VIEW_WIDTH = 420;
 const TRAY_VIEW_HEIGHT = 180;
-const TRAY_VIEW_MIN_WIDTH = 340;
+const TRAY_VIEW_CIRCLE_SIZE = 190;
+const TRAY_VIEW_MIN_WIDTH = 140;
 const TRAY_VIEW_MIN_HEIGHT = 140;
 const TRAY_VIEW_MAX_WIDTH = 900;
 const TRAY_VIEW_MAX_HEIGHT = 500;
@@ -54,6 +55,17 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 				const pinned = !!value;
 				if (pinned === this._pinned) return;
 				this.setPinned(pinned, false);
+			});
+			this.settings.onSettingChange("trayView.widgetStyle", (value) => {
+				const win = this.getWindow();
+				if (!win || win.isDestroyed()) return;
+				const isCircle = value === "circle";
+				const bounds = win.getBounds();
+				if (isCircle && bounds.width > 220) {
+					win.setSize(TRAY_VIEW_CIRCLE_SIZE, TRAY_VIEW_CIRCLE_SIZE);
+				} else if (!isCircle && bounds.width < 300) {
+					win.setSize(TRAY_VIEW_WIDTH, TRAY_VIEW_HEIGHT);
+				}
 			});
 		}
 		void this.tryRestorePinned();
@@ -110,10 +122,15 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 		if (this._ready) return this._ready;
 
 		this._ready = (async () => {
+			const currentStyle = (this.settings.get("trayView.widgetStyle", "default") as string) || "default";
+			const isCircle = currentStyle === "circle";
+			const initWidth = isCircle ? TRAY_VIEW_CIRCLE_SIZE : TRAY_VIEW_WIDTH;
+			const initHeight = isCircle ? TRAY_VIEW_CIRCLE_SIZE : TRAY_VIEW_HEIGHT;
+
 			const win = await createAppWindow({
 				path: "/trayview",
-				width: TRAY_VIEW_WIDTH,
-				height: TRAY_VIEW_HEIGHT,
+				width: initWidth,
+				height: initHeight,
 				minWidth: TRAY_VIEW_MIN_WIDTH,
 				minHeight: TRAY_VIEW_MIN_HEIGHT,
 				maxWidth: TRAY_VIEW_MAX_WIDTH,
@@ -123,6 +140,7 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 				minimizeable: false,
 				maximizeable: false,
 				devtools: false,
+				transparent: true,
 				...(platform.isMacOS ? { type: "panel" as const } : {}),
 			});
 

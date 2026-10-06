@@ -37,7 +37,8 @@ const defaultSettings = {
 	},
 	trayView: {
 		pinned: false,
-		widgetStyle: "default" as "default" | "capsule" | "lyrics" | "vinyl",
+		widgetStyle: "default" as "default" | "capsule" | "lyrics" | "vinyl" | "circle",
+		circleDiscType: "vinyl" as "vinyl" | "art",
 		autoHideControls: false,
 		opacity: 100,
 	},

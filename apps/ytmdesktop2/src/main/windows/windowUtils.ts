@@ -29,6 +29,9 @@ export type WindowOptions = {
 	maximizeable?: boolean;
 	minimizeable?: boolean;
 	show?: boolean;
+	transparent?: boolean;
+	hasShadow?: boolean;
+	backgroundColor?: string;
 	/** Electron BrowserWindow `type` (e.g. macOS `panel` for tray popups). */
 	type?: Electron.BrowserWindowConstructorOptions["type"];
 	/** Open detached DevTools (defaults to true in development). */
@@ -263,11 +266,12 @@ export function shortcutOnWindow(
 
 export async function createAppWindow(appOptions?: Partial<WindowOptions>) {
 	// eslint-disable-next-line prefer-const
-	let { parent, path, minHeight, minWidth, maxHeight, maxWidth, height, width, top, showTaskBar, minimizeable, maximizeable, show, type, devtools } =
+	let { parent, path, minHeight, minWidth, maxHeight, maxWidth, height, width, top, showTaskBar, minimizeable, maximizeable, show, type, devtools, transparent, hasShadow, backgroundColor } =
 		appOptions ?? {};
 	if (!path) path = "/";
 	const shouldShow = show ?? true;
 	const shouldOpenDevtools = devtools ?? (isDevelopment || isProdDebug);
+	const isTransparent = transparent ?? false;
 	// Create hidden so we can position relative to parent before first paint (avoids primary-display flash).
 	const win = new BrowserWindow({
 		width: width ?? 800,
@@ -279,7 +283,9 @@ export async function createAppWindow(appOptions?: Partial<WindowOptions>) {
 		show: false,
 		minimizable: minimizeable === true,
 		maximizable: maximizeable === true,
-		backgroundColor: "#000000",
+		transparent: isTransparent,
+		hasShadow: hasShadow ?? !isTransparent,
+		backgroundColor: backgroundColor ?? (isTransparent ? "#00000000" : "#000000"),
 		fullscreenable: !maxWidth && !maxHeight,
 		icon: getAppIconPath(),
 		frame: false,

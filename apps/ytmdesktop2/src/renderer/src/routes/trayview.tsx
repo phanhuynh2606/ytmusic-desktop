@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 import { intervalToDuration } from "date-fns";
 import { clamp } from "lodash-es";
-import { ArrowLeftIcon, GripVerticalIcon, PinIcon } from "lucide-react";
+import { ArrowLeftIcon, Disc3Icon, GripVerticalIcon, ImageIcon, PinIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ButtonHTMLAttributes, type MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import ApiIcon from "@/assets/icons/chip.svg?react";
@@ -448,6 +448,236 @@ function VinylDisc({
 	);
 }
 
+interface CircleDiscWidgetProps {
+	artSrc: string | null;
+	playing: boolean;
+	title: string;
+	artist?: string | null;
+	time: { current: string; end: string; pct: number } | null;
+	displayAccent: string | null;
+	pinned: boolean;
+	discType: "vinyl" | "art";
+	onToggleDiscType: () => void;
+	onPlayPause: () => void;
+	onPrev: () => void;
+	onNext: () => void;
+	onPinToggle: () => void;
+	onOpenMain: () => void;
+	onSettings: () => void;
+}
+
+function CircleDiscWidget({
+	artSrc,
+	playing,
+	title,
+	artist,
+	time,
+	displayAccent,
+	pinned,
+	discType,
+	onToggleDiscType,
+	onPlayPause,
+	onPrev,
+	onNext,
+	onPinToggle,
+	onOpenMain,
+	onSettings,
+}: CircleDiscWidgetProps) {
+	return (
+		<div className="group drag relative size-full max-w-[174px] max-h-[174px] aspect-square flex items-center justify-center select-none">
+			{/* Outer Circular Progress Ring */}
+			<svg className="pointer-events-none absolute -inset-0.5 size-[calc(100%+4px)] -rotate-90 z-10" viewBox="0 0 100 100">
+				<circle
+					cx="50"
+					cy="50"
+					r="48"
+					stroke="rgba(255,255,255,0.12)"
+					strokeWidth="2.5"
+					fill="none"
+				/>
+				<circle
+					cx="50"
+					cy="50"
+					r="48"
+					stroke={displayAccent ?? "var(--accent)"}
+					strokeWidth="2.5"
+					fill="none"
+					strokeDasharray="100 100"
+					pathLength={100}
+					strokeDashoffset={100 - (time?.pct ?? 0)}
+					strokeLinecap="round"
+					className="transition-[stroke-dashoffset] duration-300"
+				/>
+			</svg>
+
+			{/* Disc Core */}
+			<div
+				className="relative size-full rounded-full overflow-hidden shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing"
+				style={{
+					boxShadow: displayAccent
+						? `0 10px 32px -4px ${displayAccent}50, 0 4px 16px rgba(0,0,0,0.85)`
+						: "0 10px 32px -4px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.75)",
+				}}
+				onDoubleClick={onPlayPause}
+			>
+				{/* 360 Spin Animation */}
+				<motion.div
+					className="relative size-full rounded-full overflow-hidden flex items-center justify-center"
+					animate={playing ? { rotate: 360 } : undefined}
+					transition={playing ? { repeat: Infinity, duration: 10, ease: "linear" } : undefined}
+				>
+					{discType === "vinyl" ? (
+						/* Vinyl Mode */
+						<div
+							className="size-full flex items-center justify-center relative rounded-full"
+							style={{
+								background: "radial-gradient(circle, #242424 0%, #151515 35%, #0e0e0e 70%, #050505 100%)",
+							}}
+						>
+							{/* Concentric Grooves */}
+							<div className="pointer-events-none absolute inset-2 rounded-full border border-white/[0.08]" />
+							<div className="pointer-events-none absolute inset-3.5 rounded-full border border-white/[0.05]" />
+							<div className="pointer-events-none absolute inset-5 rounded-full border border-white/[0.05]" />
+							<div className="pointer-events-none absolute inset-6.5 rounded-full border border-white/[0.04]" />
+
+							{/* Conic Sheen Reflex */}
+							<div
+								className="pointer-events-none absolute inset-0 rounded-full opacity-30"
+								style={{
+									background:
+										"conic-gradient(from 45deg, transparent 0deg, rgba(255,255,255,0.35) 45deg, transparent 90deg, transparent 180deg, rgba(255,255,255,0.35) 225deg, transparent 270deg)",
+								}}
+							/>
+
+							{/* Center Label (Album Art) ~65% size */}
+							<div
+								className="relative size-[64%] rounded-full overflow-hidden border-2 border-neutral-700/80 shadow-md flex items-center justify-center"
+								style={displayAccent ? { borderColor: displayAccent } : undefined}
+							>
+								{artSrc ? (
+									<img src={artSrc} alt={title || "Album Art"} className="size-full object-cover pointer-events-none select-none" />
+								) : (
+									<div className="size-full bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-neutral-400">
+										YTM
+									</div>
+								)}
+								{/* Spindle hole */}
+								<div className="absolute size-3.5 rounded-full bg-neutral-950 ring-1 ring-white/60 shadow-inner" />
+							</div>
+						</div>
+					) : (
+						/* Full Cover Art Mode */
+						<div className="size-full flex items-center justify-center relative rounded-full overflow-hidden">
+							{artSrc ? (
+								<img src={artSrc} alt={title || "Album Art"} className="size-full object-cover pointer-events-none select-none" />
+							) : (
+								<div className="size-full bg-neutral-900 flex items-center justify-center text-xs font-bold text-neutral-400">
+									YTM
+								</div>
+							)}
+							{/* Radial Vignette & Edge Grooves */}
+							<div className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_22px_rgba(0,0,0,0.6)] border border-white/20" />
+							<div className="pointer-events-none absolute inset-2.5 rounded-full border border-white/10" />
+							<div className="pointer-events-none absolute inset-5 rounded-full border border-white/10" />
+
+							{/* Conic Sheen Reflex */}
+							<div
+								className="pointer-events-none absolute inset-0 rounded-full opacity-25"
+								style={{
+									background:
+										"conic-gradient(from 45deg, transparent 0deg, rgba(255,255,255,0.4) 45deg, transparent 90deg, transparent 180deg, rgba(255,255,255,0.4) 225deg, transparent 270deg)",
+								}}
+							/>
+
+							{/* Spindle hole in center */}
+							<div className="absolute size-4 rounded-full bg-neutral-950/90 ring-1.5 ring-white/70 shadow-md flex items-center justify-center">
+								<div className="size-1 rounded-full bg-white/50" />
+							</div>
+						</div>
+					)}
+				</motion.div>
+			</div>
+
+			{/* Hover Action Overlay */}
+			<div className="no-drag pointer-events-none group-hover:pointer-events-auto absolute inset-0 rounded-full bg-black/75 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-between p-2.5 select-none z-20 shadow-2xl">
+				{/* Top Row: Switch Type, Pin, Settings */}
+				<div className="flex items-center justify-between w-full px-1">
+					<button
+						type="button"
+						onClick={onToggleDiscType}
+						aria-label={discType === "vinyl" ? "Đổi sang Ảnh bìa tròn" : "Đổi sang Đĩa than cổ điển"}
+						className="size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
+						title={discType === "vinyl" ? "Đổi sang Ảnh bìa tròn" : "Đổi sang Đĩa than cổ điển"}
+					>
+						{discType === "vinyl" ? <ImageIcon className="size-3.5" /> : <Disc3Icon className="size-3.5" />}
+					</button>
+					<div className="flex items-center gap-1">
+						<button
+							type="button"
+							onClick={onPinToggle}
+							aria-label={pinned ? "Bỏ ghim" : "Ghim"}
+							className={cn(
+								"size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm",
+								pinned && "text-accent bg-accent/25",
+							)}
+							title={pinned ? "Bỏ ghim" : "Ghim"}
+						>
+							<PinIcon className={cn("size-3", pinned && "rotate-45 fill-current")} />
+						</button>
+						<button
+							type="button"
+							onClick={onSettings}
+							aria-label="Cài đặt"
+							className="size-6 rounded-full bg-white/15 hover:bg-white/30 text-white/90 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
+							title="Cài đặt"
+						>
+							<SettingsIcon className="size-3" />
+						</button>
+					</div>
+				</div>
+
+				{/* Center Row: Controls */}
+				<div className="flex items-center justify-center gap-2">
+					<button
+						type="button"
+						onClick={onPrev}
+						aria-label="Bài trước"
+						className="size-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+						title="Bài trước"
+					>
+						<PrevIcon className="size-3.5" />
+					</button>
+					<button
+						type="button"
+						onClick={onPlayPause}
+						aria-label={playing ? "Tạm dừng" : "Phát"}
+						className="size-10 rounded-full bg-primary hover:scale-105 active:scale-95 text-primary-foreground shadow-lg flex items-center justify-center transition-transform cursor-pointer"
+						title={playing ? "Tạm dừng" : "Phát"}
+						style={displayAccent ? { backgroundColor: displayAccent } : undefined}
+					>
+						{playing ? <PauseIcon className="size-4" /> : <PlayIcon className="size-4" />}
+					</button>
+					<button
+						type="button"
+						onClick={onNext}
+						aria-label="Bài tiếp theo"
+						className="size-7 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
+						title="Bài tiếp theo"
+					>
+						<NextIcon className="size-3.5" />
+					</button>
+				</div>
+
+				{/* Bottom Row: Title + Time */}
+				<div className="flex flex-col items-center justify-center w-full px-2 text-center pb-0.5">
+					<p className="w-full truncate text-[10px] font-semibold text-white/95 leading-tight">{title}</p>
+					<p className="text-[9px] text-white/70 font-mono mt-0.5">{time ? `${time.current} / ${time.end}` : "--:--"}</p>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 interface TrayProgressBarProps {
 	time: { current: string; end: string; pct: number } | null;
 	durationSec: number;
@@ -679,7 +909,8 @@ function TrayViewPage() {
 	const { enabled: lastFmEnabled, toggleLastFM, lastFM, lastFMLoading, isBusy: lastFmBusy } = useLastFm();
 	const { enabled: discordEnabled, toggle: toggleDiscord, loading: discordLoading, connected: discordConnected, error: discordError } = useDiscord();
 	const [apiEnabled, setApiEnabled] = useSettingsState<boolean>("api.enabled", false);
-	const [widgetStyle] = useSettingsState<"default" | "capsule" | "lyrics" | "vinyl">("trayView.widgetStyle", "default");
+	const [widgetStyle] = useSettingsState<"default" | "capsule" | "lyrics" | "vinyl" | "circle">("trayView.widgetStyle", "default");
+	const [circleDiscType, setCircleDiscType] = useSettingsState<"vinyl" | "art">("trayView.circleDiscType", "vinyl");
 	const [autoHideControls] = useSettingsState<boolean>("trayView.autoHideControls", false);
 	const [activeTheme] = useSettingsState<string>("themes.selected", "default");
 	const { data: pinned = false } = trpc.trayView.pinned.useQuery();
@@ -703,6 +934,10 @@ function TrayViewPage() {
 
 	useEffect(() => {
 		document.title = "YouTube Music - Tray";
+		document.documentElement.classList.add("translucent");
+		return () => {
+			document.documentElement.classList.remove("translucent");
+		};
 	}, []);
 
 	useEffect(() => {
@@ -950,9 +1185,33 @@ function TrayViewPage() {
 		}
 	}, [activeTheme]);
 
+	if (widgetStyle === "circle") {
+		return (
+			<div className="absolute inset-0 flex items-center justify-center p-2 bg-transparent select-none overflow-hidden">
+				<CircleDiscWidget
+					artSrc={artSrc}
+					playing={playing}
+					title={title}
+					artist={artist}
+					time={time}
+					displayAccent={displayAccent}
+					pinned={pinned}
+					discType={circleDiscType || "vinyl"}
+					onToggleDiscType={() => setCircleDiscType((prev) => (prev === "art" ? "vinyl" : "art"))}
+					onPlayPause={() => void (!playing ? play() : pause())}
+					onPrev={handlePrev}
+					onNext={handleNext}
+					onPinToggle={() => void handlePinToggle()}
+					onOpenMain={() => void openMain()}
+					onSettings={() => void handleSettings()}
+				/>
+			</div>
+		);
+	}
+
 	return (
 		<div
-			className={cn("absolute inset-0 flex overflow-hidden border", themeContainerClass)}
+			className={cn("absolute inset-0 flex overflow-hidden border rounded-2xl", themeContainerClass)}
 			onMouseEnter={(ev) => {
 				setContentHovered(true);
 				const { left, width } = ev.currentTarget.getBoundingClientRect();
@@ -1147,10 +1406,18 @@ function TrayViewPage() {
 											<Spinner className="size-3" />
 											<span>Đang tìm lời bài hát…</span>
 										</div>
+									) : lrcLines.length > 0 ? (
+										<div className="flex flex-col items-center justify-center text-center py-1">
+											<p className="text-xs italic text-muted-foreground/50">♪ Nhạc dạo...</p>
+											{nextLine ? (
+												<p className="w-full truncate text-[11px] font-normal text-muted-foreground/60 mt-0.5">
+													{nextLine}
+												</p>
+											) : null}
+										</div>
 									) : (
 										<div className="text-center py-2">
-											<p className="text-xs font-semibold text-foreground/80">{title}</p>
-											<p className="text-[11px] text-muted-foreground/60 mt-0.5">Không tìm thấy lời bài hát</p>
+											<p className="text-[11px] text-muted-foreground/60">Không tìm thấy lời bài hát</p>
 										</div>
 									)}
 								</div>

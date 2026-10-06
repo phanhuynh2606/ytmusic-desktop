@@ -2,6 +2,8 @@ import {
 	RiAppleLine,
 	RiCheckLine,
 	RiCodeSSlashLine,
+	RiDiscLine,
+	RiImageLine,
 	RiMoonLine,
 	RiSparklingLine,
 	RiWindowsLine,
@@ -45,6 +47,12 @@ const WIDGET_STYLES = [
 		label: "Đĩa than (Vinyl Record)",
 		description: "Đĩa than xoay tròn theo điệu nhạc, đậm chất retro chill",
 		badge: "Retro",
+	},
+	{
+		id: "circle",
+		label: "Đĩa tròn mini (Floating Disc)",
+		description: "Đúng 1 hình tròn đĩa than / ảnh bài hát xoay tròn tối giản tuyệt đối",
+		badge: "Circle",
 	},
 ] as const;
 
@@ -118,6 +126,7 @@ function ThemesSettingsPage() {
 	});
 	const [customFile, , { isPending: pathPending }] = useSettingsState("themes.customFile", "");
 	const [widgetStyle, setWidgetStyle] = useSettingsState<string>("trayView.widgetStyle", "default");
+	const [circleDiscType, setCircleDiscType] = useSettingsState<"vinyl" | "art">("trayView.circleDiscType", "vinyl");
 	const { data: themes } = trpc.themes.list.useQuery();
 	const { mutateAsync: openFile } = trpc.app.openFile.useMutation();
 
@@ -291,7 +300,7 @@ function ThemesSettingsPage() {
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
 					{WIDGET_STYLES.map((ws) => {
 						const isSelected = (widgetStyle || "default") === ws.id;
 						return (
@@ -323,6 +332,47 @@ function ThemesSettingsPage() {
 						);
 					})}
 				</div>
+
+				{widgetStyle === "circle" && (
+					<div className="p-3.5 rounded-xl border border-border/60 bg-muted/20 space-y-2">
+						<span className="text-xs font-semibold text-foreground">Kiểu hiển thị đĩa tròn:</span>
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+							<button
+								type="button"
+								onClick={() => setCircleDiscType("vinyl")}
+								className={cn(
+									"flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg border text-left transition-all cursor-pointer",
+									(circleDiscType || "vinyl") === "vinyl"
+										? "border-primary bg-primary/10 text-primary font-medium ring-1 ring-primary/30"
+										: "border-border/60 hover:bg-muted/40 text-muted-foreground",
+								)}
+							>
+								<RiDiscLine className="size-4 shrink-0 text-primary" />
+								<div>
+									<div className="font-medium text-foreground">Đĩa than cổ điển (Vinyl Record)</div>
+									<div className="text-[10px] text-muted-foreground">Rãnh đĩa đen + bìa album ở giữa</div>
+								</div>
+							</button>
+							<button
+								type="button"
+								onClick={() => setCircleDiscType("art")}
+								className={cn(
+									"flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg border text-left transition-all cursor-pointer",
+									circleDiscType === "art"
+										? "border-primary bg-primary/10 text-primary font-medium ring-1 ring-primary/30"
+										: "border-border/60 hover:bg-muted/40 text-muted-foreground",
+								)}
+							>
+								<RiImageLine className="size-4 shrink-0 text-primary" />
+								<div>
+									<div className="font-medium text-foreground">Ảnh bài hát xoay tròn (Full Cover Art)</div>
+									<div className="text-[10px] text-muted-foreground">Ảnh bìa toàn khung tròn + ánh phản chiếu</div>
+								</div>
+							</button>
+						</div>
+					</div>
+				)}
+
 				<div className="mt-4 pt-4 border-t border-border/60">
 					<SettingsCheckbox
 						configKey="trayView.autoHideControls"
