@@ -293,7 +293,7 @@ function MiniPlayerPage() {
 			.then(async (res) => {
 				if (!res.ok) {
 					const fallbackRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${rawAuthor || ""}`)}`);
-					let result = null;
+					let result: any = null;
 					if (fallbackRes.ok) {
 						const hits = await fallbackRes.json();
 						if (Array.isArray(hits) && hits.length > 0) {
