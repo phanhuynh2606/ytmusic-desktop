@@ -79,7 +79,7 @@ export default class TrayViewProvider extends BaseProvider implements AfterInit,
 			this.settings.onSettingChange("trayView.circleSize", (value) => {
 				const win = this.getWindow();
 				if (!win || win.isDestroyed()) return;
-				const isCircle = this.settings.get("trayView.widgetStyle", "default") === "circle";
+				const isCircle = (this.settings.get("trayView.widgetStyle", "default") as string) === "circle";
 				if (isCircle && typeof value === "number") {
 					win.setSize(value, value);
 				}
